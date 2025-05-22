@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Fitness App</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+  <div id="app" class="container mx-auto p-4">
+    <!-- Navigation -->
+    <nav class="flex space-x-4 mb-4">
+      <button onclick="show('login')" class="py-2 px-4 bg-blue-500 text-white rounded">Login</button>
+      <button onclick="show('signup')" class="py-2 px-4 bg-green-500 text-white rounded">Sign Up</button>
+      <button onclick="show('entry')" class="py-2 px-4 bg-yellow-500 text-white rounded">Test Entry</button>
+      <button onclick="show('dashboard')" class="py-2 px-4 bg-purple-500 text-white rounded">Dashboard</button>
+    </nav>
+
+    <!-- Login -->
+    <div id="login" class="hidden">
+      <h2 class="text-2xl mb-4">Login</h2>
+      <form id="loginForm" class="space-y-4">
+        <input type="email" id="loginEmail" placeholder="Email" class="w-full p-2 border rounded"/>
+        <input type="password" id="loginPassword" placeholder="Password" class="w-full p-2 border rounded"/>
+        <button type="submit" class="w-full py-2 bg-blue-600 text-white rounded">Login</button>
+      </form>
+    </div>
+
+    <!-- Sign Up -->
+    <div id="signup" class="hidden">
+      <h2 class="text-2xl mb-4">Sign Up</h2>
+      <form id="signupForm" class="space-y-4">
+        <input type="text" id="fullName" placeholder="Full Name" class="w-full p-2 border rounded"/>
+        <input type="date" id="dob" class="w-full p-2 border rounded"/>
+        <select id="gender" class="w-full p-2 border rounded">
+          <option value="">Select Gender</option>
+          <option>Male</option>
+          <option>Female</option>
+        </select>
+        <input type="text" id="sport" placeholder="Sport" class="w-full p-2 border rounded"/>
+        <input type="text" id="contact" placeholder="Contact Number" class="w-full p-2 border rounded"/>
+        <input type="email" id="email" placeholder="Email" class="w-full p-2 border rounded"/>
+        <input type="password" id="password" placeholder="Password" class="w-full p-2 border rounded"/>
+        <button type="submit" class="w-full py-2 bg-green-600 text-white rounded">Sign Up</button>
+      </form>
+    </div>
+
+    <!-- Test Entry -->
+    <div id="entry" class="hidden">
+      <h2 class="text-2xl mb-4">Performance Test Entry</h2>
+      <form id="entryForm" class="space-y-4">
+        <select id="athleteSelect" class="w-full p-2 border rounded">
+          <option value="">Select Athlete</option>
+        </select>
+        <textarea id="injury" placeholder="Current Injury or Surgery" class="w-full p-2 border rounded"></textarea>
+        <input type="number" id="squatR" placeholder="Squat (Right)" class="w-full p-2 border rounded"/>
+        <input type="number" id="squatL" placeholder="Squat (Left)" class="w-full p-2 border rounded"/>
+        <input type="number" id="pull" placeholder="Pull" class="w-full p-2 border rounded"/>
+        <input type="number" id="push" placeholder="Push" class="w-full p-2 border rounded"/>
+        <input type="text" id="test24" placeholder="2.4km Test Time" class="w-full p-2 border rounded"/>
+        <button type="submit" class="w-full py-2 bg-yellow-600 text-white rounded">Submit Test</button>
+      </form>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="dashboard" class="hidden">
+      <h2 class="text-2xl mb-4">Dashboard Overview</h2>
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div class="bg-white p-4 rounded shadow">Total Athletes: <span id="totalAthletes">0</span></div>
+        <div class="bg-white p-4 rounded shadow">Recent Tests: <span id="recentTests">0</span></div>
+      </div>
+      <table class="min-w-full bg-white rounded shadow">
+        <thead class="bg-gray-200">
+          <tr>
+            <th class="py-2 px-4">Athlete</th>
+            <th class="py-2 px-4">Test Date</th>
+            <th class="py-2 px-4">Squat R</th>
+            <th class="py-2 px-4">Squat L</th>
+            <th class="py-2 px-4">Pull</th>
+            <th class="py-2 px-4">Push</th>
+            <th class="py-2 px-4">2.4km</th>
+          </tr>
+        </thead>
+        <tbody id="dashboardTable"></tbody>
+      </table>
+    </div>
+  </div>
+  <script src="/src/app.js"></script>
+</body>
+</html>
