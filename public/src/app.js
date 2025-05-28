@@ -1,58 +1,78 @@
-// src/app.js
-let token = null;
+// src/app.js (main app logic for index.html)
 
-function show(section) {
-  ['login','signup','entry','dashboard'].forEach(id => {
-    document.getElementById(id).classList.add('hidden');
-  });
-  document.getElementById(section).classList.remove('hidden');
+const token = localStorage.getItem('token');
+if (!token) {
+  window.location.href = '/login.html';
 }
 
-// Login Handler
-document.getElementById('loginForm').addEventListener('submit', async e => {
-  e.preventDefault();
-  const email = document.getElementById('loginEmail').value;
-  const password = document.getElementById('loginPassword').value;
+let sessionTimer = null;
+const SESSION_TIMEOUT = 15 * 60 * 1000; // 15 minutes
 
-  const res = await fetch('/api/auth/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password })
-  });
-  const data = await res.json();
-  if (data.token) {
-    token = data.token;
-    show('dashboard');
-    loadDashboard();
-  } else {
-    alert(data.message || 'Login failed');
+function show(section) {
+  if (section === 'login' || section === 'signup') {
+    window.location.href = `/${section}.html`;
+    return;
   }
-});
 
-// Signup Handler
-document.getElementById('signupForm').addEventListener('submit', async e => {
-  e.preventDefault();
-  const user = {
-    fullName: document.getElementById('fullName').value,
-    dob: document.getElementById('dob').value,
-    gender: document.getElementById('gender').value,
-    sport: document.getElementById('sport').value,
-    contact: document.getElementById('contact').value,
-    email: document.getElementById('email').value,
-    password: document.getElementById('password').value
-  };
-  const res = await fetch('/api/auth/signup', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(user)
+  ['entry','dashboard'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.add('hidden');
+  });
+  const target = document.getElementById(section);
+  if (target) target.classList.remove('hidden');
+
+  if (section === 'entry') loadAthletes();
+  updateNav(section);
+}
+
+function updateNav(section) {
+  const nav = document.getElementById('navBar');
+  if (!nav) return;
+  nav.innerHTML = `
+    <button onclick="show('entry')" class="py-2 px-4 bg-yellow-500 text-white rounded">Test Entry</button>
+    <button onclick="show('dashboard')" class="py-2 px-4 bg-purple-500 text-white rounded">Dashboard</button>
+    <button onclick="logout()" class="py-2 px-4 bg-blue-600 text-white rounded">Logout</button>
+  `;
+}
+
+function startSessionTimer() {
+  clearTimeout(sessionTimer);
+  sessionTimer = setTimeout(() => {
+    alert('Session expired. Please log in again.');
+    logout();
+  }, SESSION_TIMEOUT);
+}
+
+function logout() {
+  localStorage.removeItem('token');
+  window.location.href = '/login.html';
+}
+
+// Load athletes dynamically
+async function loadAthletes() {
+  const res = await fetch('/api/athletes', {
+    headers: { Authorization: `Bearer ${token}` }
   });
   const data = await res.json();
-  if (data.token) {
-    token = data.token;
-    show('dashboard');
-    loadDashboard();
-  } else {
-    alert('Signup failed');
+  const select = document.getElementById('athleteSelect');
+  select.innerHTML = '';
+
+  data.forEach(user => {
+    const option = document.createElement('option');
+    option.value = user.id;
+    option.textContent = user.fullName;
+    select.appendChild(option);
+  });
+
+  const addNew = document.createElement('option');
+  addNew.value = 'new';
+  addNew.textContent = '➕ Add New Athlete';
+  select.appendChild(addNew);
+}
+
+document.getElementById('athleteSelect').addEventListener('change', e => {
+  if (e.target.value === 'new') {
+    window.location.href = '/signup.html';
   }
 });
 
@@ -112,4 +132,12 @@ async function loadDashboard() {
   });
 }
 
-show('login');
+['click', 'keydown', 'mousemove'].forEach(evt => {
+  document.addEventListener(evt, () => {
+    if (token) startSessionTimer();
+  });
+});
+
+startSessionTimer();
+show('dashboard');
+loadDashboard();

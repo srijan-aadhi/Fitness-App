@@ -8,42 +8,9 @@
 </head>
 <body class="bg-gray-100">
   <div id="app" class="container mx-auto p-4">
-    <!-- Navigation -->
-    <nav class="flex space-x-4 mb-4">
-      <button onclick="show('login')" class="py-2 px-4 bg-blue-500 text-white rounded">Login</button>
-      <button onclick="show('signup')" class="py-2 px-4 bg-green-500 text-white rounded">Sign Up</button>
-      <button onclick="show('entry')" class="py-2 px-4 bg-yellow-500 text-white rounded">Test Entry</button>
-      <button onclick="show('dashboard')" class="py-2 px-4 bg-purple-500 text-white rounded">Dashboard</button>
-    </nav>
-
-    <!-- Login -->
-    <div id="login" class="hidden">
-      <h2 class="text-2xl mb-4">Login</h2>
-      <form id="loginForm" class="space-y-4">
-        <input type="email" id="loginEmail" placeholder="Email" class="w-full p-2 border rounded"/>
-        <input type="password" id="loginPassword" placeholder="Password" class="w-full p-2 border rounded"/>
-        <button type="submit" class="w-full py-2 bg-blue-600 text-white rounded">Login</button>
-      </form>
-    </div>
-
-    <!-- Sign Up -->
-    <div id="signup" class="hidden">
-      <h2 class="text-2xl mb-4">Sign Up</h2>
-      <form id="signupForm" class="space-y-4">
-        <input type="text" id="fullName" placeholder="Full Name" class="w-full p-2 border rounded"/>
-        <input type="date" id="dob" class="w-full p-2 border rounded"/>
-        <select id="gender" class="w-full p-2 border rounded">
-          <option value="">Select Gender</option>
-          <option>Male</option>
-          <option>Female</option>
-        </select>
-        <input type="text" id="sport" placeholder="Sport" class="w-full p-2 border rounded"/>
-        <input type="text" id="contact" placeholder="Contact Number" class="w-full p-2 border rounded"/>
-        <input type="email" id="email" placeholder="Email" class="w-full p-2 border rounded"/>
-        <input type="password" id="password" placeholder="Password" class="w-full p-2 border rounded"/>
-        <button type="submit" class="w-full py-2 bg-green-600 text-white rounded">Sign Up</button>
-      </form>
-    </div>
+    
+    <!-- Nav placeholder (updated by JS) -->
+    <nav id="navBar" class="flex space-x-4 mb-4"></nav>
 
     <!-- Test Entry -->
     <div id="entry" class="hidden">
@@ -84,6 +51,7 @@
         <tbody id="dashboardTable"></tbody>
       </table>
     </div>
+    
   </div>
   <script src="/src/app.js"></script>
 </body>

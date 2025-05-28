@@ -63,4 +63,12 @@ app.get('/api/dashboard', authMiddleware, (req, res) => {
   });
 });
 
+app.get('/api/athletes', authMiddleware, (req, res) => {
+  db.all(`SELECT id, fullName FROM users WHERE id = ?`, [req.user.id], (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(rows);
+  });
+});
+
+
 app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
