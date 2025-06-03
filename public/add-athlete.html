@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Add New Athlete</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="add-athlete.js" defer></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+  <div class="container mx-auto p-4">
+    
+    <!-- ✅ Navigation Bar (copied from index.html) -->
+    <nav id="navBar" class="flex space-x-4 mb-6 justify-center">
+      <button onclick="window.location.href='index.html'" class="py-2 px-4 bg-yellow-500 text-white rounded">Test Entry</button>
+      <button onclick="window.location.href='index.html'" class="py-2 px-4 bg-purple-500 text-white rounded">Dashboard</button>
+      <button onclick="logout()" class="py-2 px-4 bg-blue-600 text-white rounded">Logout</button>
+    </nav>
+
+    <!-- ✅ Header -->
+    <h1 class="text-3xl font-bold mb-6 text-center">Add New Athlete</h1>
+
+    <!-- ✅ Form: compact & aligned -->
+    <form id="addAthleteForm" class="flex flex-wrap gap-4 justify-center">
+      <input type="text" id="fullName" placeholder="Full Name" required class="p-2 border rounded w-60" />
+      <input type="date" id="dob" required class="p-2 border rounded w-60" />
+      <input type="text" id="gender" placeholder="Gender" required class="p-2 border rounded w-60" />
+      <input type="text" id="sport" placeholder="Sport" required class="p-2 border rounded w-60" />
+      <input type="text" id="contact" placeholder="Contact Info" required class="p-2 border rounded w-60" />
+      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded w-60">Add Athlete</button>
+    </form>
+
+    <!-- ✅ Status messages -->
+    <div class="text-center mt-6">
+      <p id="successMessage" class="hidden text-green-600 text-lg font-semibold">✅ Athlete added successfully!</p>
+      <p id="errorMessage" class="hidden text-red-600 text-lg font-semibold">❌ Failed to add athlete.</p>
+    </div>
+  </div>
+
+  <!-- ✅ Auth/Session Handling Script -->
+  <script>
+    function logout() {
+      localStorage.removeItem('token');
+      window.location.href = '/login.html';
+    }
+  </script>
+</body>
+</html>

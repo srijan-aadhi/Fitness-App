@@ -1,8 +1,15 @@
-// src/app.js (main app logic for index.html)
+// public/src/app.js
 
 const token = localStorage.getItem('token');
 if (!token) {
   window.location.href = '/login.html';
+}
+
+// 👇 New: Check if returning from add-athlete page
+if (localStorage.getItem('athleteAdded') === 'true') {
+  localStorage.removeItem('athleteAdded');
+  show('entry');
+  loadAthletes();
 }
 
 let sessionTimer = null;
@@ -65,14 +72,14 @@ async function loadAthletes() {
   });
 
   const addNew = document.createElement('option');
-  addNew.value = 'new';
+  addNew.value = 'add_new';
   addNew.textContent = '➕ Add New Athlete';
   select.appendChild(addNew);
 }
 
 document.getElementById('athleteSelect').addEventListener('change', e => {
-  if (e.target.value === 'new') {
-    window.location.href = '/signup.html';
+  if (e.target.value === 'add_new') {
+    window.location.href = 'add-athlete.html';
   }
 });
 
