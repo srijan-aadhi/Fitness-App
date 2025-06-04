@@ -26,6 +26,18 @@ db.serialize(() => {
     timestamp TEXT,
     FOREIGN KEY(user_id) REFERENCES users(id)
   )`);
+
+  db.run(`CREATE TABLE IF NOT EXISTS athletes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER,
+  fullName TEXT,
+  dob TEXT,
+  gender TEXT,
+  sport TEXT,
+  contact TEXT,
+  FOREIGN KEY(user_id) REFERENCES users(id)
+)`);
+
 });
 
 module.exports = db;

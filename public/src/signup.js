@@ -25,6 +25,6 @@ signupForm.addEventListener('submit', async (e) => {
     localStorage.setItem('token', data.token);
     window.location.href = '/index.html';
   } else {
-    alert('Signup failed');
+    alert('Signup failed'); 
   }
 });

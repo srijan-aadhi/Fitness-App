@@ -36,7 +36,7 @@ document.getElementById('addAthleteForm').addEventListener('submit', async (e) =
       document.getElementById('goBackBtn').classList.remove('hidden');
       document.getElementById('addAthleteForm').reset();
     } else {
-      document.getElementById('errorMessage').textContent = data.error || 'Failed to add athlete.';
+      document.getElementById('errorMessage').textContent = data.error || data.message || 'Failed to add athlete.';
       document.getElementById('errorMessage').classList.remove('hidden');
     }
   } catch (err) {
@@ -50,3 +50,38 @@ document.getElementById('goBackBtn').addEventListener('click', () => {
   localStorage.setItem('athleteAdded', 'true');
   window.location.href = 'index.html';
 });
+
+async function loadAthletes() {
+  console.log('loadAthletes called');
+  const select = document.getElementById('athleteSelect');
+  select.innerHTML = '';
+
+  // Always add the placeholder
+  const placeholder = document.createElement('option');
+  placeholder.value = '';
+  placeholder.textContent = 'Select Athlete';
+  select.appendChild(placeholder);
+
+  try {
+    const res = await fetch('/api/athletes', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!res.ok) throw new Error('Failed to fetch athletes');
+    const data = await res.json();
+
+    data.forEach(user => {
+      const option = document.createElement('option');
+      option.value = user.id;
+      option.textContent = user.fullName;
+      select.appendChild(option);
+    });
+  } catch (err) {
+    // Optionally show an error message to the user
+    console.error('Error loading athletes:', err);
+  }
+
+  const addNew = document.createElement('option');
+  addNew.value = 'add_new';
+  addNew.textContent = '➕ Add New Athlete';
+  select.appendChild(addNew);
+}

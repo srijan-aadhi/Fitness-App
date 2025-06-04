@@ -57,19 +57,40 @@ function logout() {
 
 // Load athletes dynamically
 async function loadAthletes() {
-  const res = await fetch('/api/athletes', {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  const data = await res.json();
   const select = document.getElementById('athleteSelect');
   select.innerHTML = '';
 
-  data.forEach(user => {
-    const option = document.createElement('option');
-    option.value = user.id;
-    option.textContent = user.fullName;
-    select.appendChild(option);
-  });
+  // Always add the placeholder
+  const placeholder = document.createElement('option');
+  placeholder.value = '';
+  placeholder.textContent = 'Select Athlete';
+  select.appendChild(placeholder);
+
+  try {
+    const res = await fetch('/api/athletes', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const data = await res.json();
+
+    if (!Array.isArray(data)) {
+      // Show error in dropdown or alert
+      const errorOption = document.createElement('option');
+      errorOption.value = '';
+      errorOption.textContent = data.error || data.message || 'Failed to load athletes';
+      select.appendChild(errorOption);
+      throw new Error(data.error || data.message || 'Failed to load athletes');
+    }
+
+    data.forEach(user => {
+      const option = document.createElement('option');
+      option.value = user.id;
+      option.textContent = user.fullName;
+      select.appendChild(option);
+    });
+  } catch (err) {
+    console.error('Error loading athletes:', err);
+    // Optionally show an error message in the UI
+  }
 
   const addNew = document.createElement('option');
   addNew.value = 'add_new';
