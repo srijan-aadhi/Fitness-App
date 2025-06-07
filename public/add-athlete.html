@@ -2,44 +2,150 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Add New Athlete</title>
+  <title>Add New Athlete - FitTracker Pro</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <script src="src/add-athlete.js" defer></script>
-</head>
-<body class="bg-gray-100 min-h-screen">
-  <div class="container mx-auto p-4">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
     
-    <!-- ✅ Navigation Bar (copied from index.html) -->
-    <nav id="navBar" class="flex space-x-4 mb-6 justify-center">
-      <button onclick="window.location.href='index.html'" class="py-2 px-4 bg-yellow-500 text-white rounded">Test Entry</button>
-      <button onclick="window.location.href='index.html'" class="py-2 px-4 bg-purple-500 text-white rounded">Dashboard</button>
-      <button onclick="logout()" class="py-2 px-4 bg-blue-600 text-white rounded">Logout</button>
-    </nav>
-
-    <!-- ✅ Header -->
-    <h1 class="text-3xl font-bold mb-6 text-center">Add New Athlete</h1>
-
-    <!-- ✅ Form: compact & aligned -->
-    <form id="addAthleteForm" class="flex flex-wrap gap-4 justify-center">
-      <input type="text" id="fullName" placeholder="Full Name" required class="p-2 border rounded w-60" />
-      <input type="date" id="dob" required class="p-2 border rounded w-60" />
-      <input type="text" id="gender" placeholder="Gender" required class="p-2 border rounded w-60" />
-      <input type="text" id="sport" placeholder="Sport" required class="p-2 border rounded w-60" />
-      <input type="text" id="contact" placeholder="Contact Info" required class="p-2 border rounded w-60" />
-      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded w-60">Add Athlete</button>
-    </form>
-
-    <!-- ✅ Status messages -->
-    <div class="text-center mt-6">
-      <p id="successMessage" class="hidden text-green-600 text-lg font-semibold">✅ Athlete added successfully!</p>
-      <p id="errorMessage" class="hidden text-red-600 text-lg font-semibold">❌ Failed to add athlete.</p>
-      <button id="goBackBtn" class="bg-yellow-500 text-white px-4 py-2 rounded w-60 mx-auto block mt-4">
-        Go Back to Dashboard
-      </button>
+    * {
+      font-family: 'Inter', sans-serif;
+    }
+    
+    .nav-glass {
+      backdrop-filter: blur(10px);
+      background: rgba(0, 0, 0, 0.9);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+    
+    .card {
+      backdrop-filter: blur(10px);
+      background: rgba(255, 255, 255, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      transition: all 0.3s ease;
+    }
+    
+    .page-bg {
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      min-height: 100vh;
+    }
+  </style>
+</head>
+<body class="page-bg">
+  
+  <!-- Navigation -->
+  <nav class="nav-glass">
+    <div class="container mx-auto px-6 py-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <i class="fas fa-dumbbell text-2xl text-white"></i>
+          <span class="text-xl font-bold text-white">FitTracker Pro</span>
+        </div>
+        <div class="flex space-x-4">
+          <button onclick="window.location.href='index.html'" class="px-6 py-2 text-white hover:text-yellow-400 transition-colors font-semibold">
+            <i class="fas fa-chart-line mr-2"></i>Test Entry
+          </button>
+          <button onclick="window.location.href='index.html'" class="px-6 py-2 text-white hover:text-yellow-400 transition-colors font-semibold">
+            <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+          </button>
+          <button onclick="logout()" class="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-full transition-all font-semibold">
+            <i class="fas fa-sign-out-alt mr-2"></i>Logout
+          </button>
+        </div>
+      </div>
     </div>
-  </div>
+  </nav>
 
-  <!-- ✅ Auth/Session Handling Script -->
+  <main class="container mx-auto px-6 py-12">
+    <div class="text-center mb-12 pt-8">
+      <h1 class="text-4xl font-bold text-gray-800 mb-4">
+        <i class="fas fa-user-plus mr-3 text-blue-600"></i>Add New Athlete
+      </h1>
+      <p class="text-xl text-gray-600">Register a new athlete to the performance tracking system</p>
+    </div>
+    
+    <div class="max-w-2xl mx-auto">
+      <div class="card rounded-2xl p-8 shadow-lg">
+        <form id="addAthleteForm" class="space-y-6">
+          <div class="grid md:grid-cols-2 gap-6">
+            <div>
+              <label for="fullName" class="block font-semibold text-gray-700 mb-2">
+                <i class="fas fa-user mr-2"></i>Full Name
+              </label>
+              <input type="text" id="fullName" required placeholder="Enter full name" 
+                     class="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+            </div>
+            
+            <div>
+              <label for="dob" class="block font-semibold text-gray-700 mb-2">
+                <i class="fas fa-calendar mr-2"></i>Date of Birth
+              </label>
+              <input type="date" id="dob" required 
+                     class="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+            </div>
+          </div>
+          
+          <div class="grid md:grid-cols-2 gap-6">
+            <div>
+              <label for="gender" class="block font-semibold text-gray-700 mb-2">
+                <i class="fas fa-venus-mars mr-2"></i>Gender
+              </label>
+              <input type="text" id="gender" required placeholder="e.g., Male, Female" 
+                     class="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+            </div>
+            
+            <div>
+              <label for="sport" class="block font-semibold text-gray-700 mb-2">
+                <i class="fas fa-running mr-2"></i>Primary Sport
+              </label>
+              <input type="text" id="sport" required placeholder="e.g., Football, Basketball" 
+                     class="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+            </div>
+          </div>
+          
+          <div>
+            <label for="contact" class="block font-semibold text-gray-700 mb-2">
+              <i class="fas fa-phone mr-2"></i>Contact Information
+            </label>
+            <input type="text" id="contact" required placeholder="Phone number or email" 
+                   class="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+          </div>
+          
+          <button type="submit" class="btn-primary w-full py-4 text-white rounded-xl font-semibold text-lg">
+            <i class="fas fa-plus mr-2"></i>Add Athlete to System
+          </button>
+        </form>
+      </div>
+      
+      <!-- Success/Error Messages -->
+      <div class="text-center mt-8">
+        <p id="successMessage" class="hidden bg-green-100 text-green-800 p-4 rounded-xl border border-green-200 text-lg font-semibold">
+          <i class="fas fa-check-circle mr-2"></i>Athlete added successfully!
+        </p>
+        <p id="errorMessage" class="hidden bg-red-100 text-red-800 p-4 rounded-xl border border-red-200 text-lg font-semibold">
+          <i class="fas fa-exclamation-circle mr-2"></i>Failed to add athlete. Please try again.
+        </p>
+        
+        <button id="goBackBtn" class="btn-primary px-8 py-3 rounded-xl mt-4 font-semibold">
+          <i class="fas fa-arrow-left mr-2"></i>Go Back to Dashboard
+        </button>
+      </div>
+    </div>
+  </main>
+  
   <script>
     function logout() {
       localStorage.removeItem('token');

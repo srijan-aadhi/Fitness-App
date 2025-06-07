@@ -43,12 +43,12 @@ app.post('/api/auth/login', (req, res) => {
 
 // Submit Test
 app.post('/api/performance', authMiddleware, (req, res) => {
-  const { injury, squatR, squatL, pull, push, test24 } = req.body;
+  const { athlete_id, injury, squatR, squatL, pull, push, test24 } = req.body;
   const timestamp = new Date().toISOString();
 
   db.run(
-    `INSERT INTO performance_tests (user_id, injury, squatR, squatL, pull, push, test24, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    [req.user.id, injury, squatR, squatL, pull, push, test24, timestamp],
+    `INSERT INTO performance_tests (user_id, athlete_id, injury, squatR, squatL, pull, push, test24, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [req.user.id, athlete_id, injury, squatR, squatL, pull, push, test24, timestamp],
     err => {
       if (err) return res.status(500).json({ error: err.message });
       res.json({ success: true });
@@ -58,16 +58,28 @@ app.post('/api/performance', authMiddleware, (req, res) => {
 
 // Dashboard
 app.get('/api/dashboard', authMiddleware, (req, res) => {
-  db.all(
-    `SELECT * FROM performance_tests WHERE user_id = ? ORDER BY timestamp DESC`,
+  db.get(
+    `SELECT COUNT(*) as count FROM athletes WHERE user_id = ?`,
     [req.user.id],
-    (err, rows) => {
+    (err, countRow) => {
       if (err) return res.status(500).json({ error: err.message });
-      res.json({
-        totalAthletes: 1, // Placeholder if you add athlete tracking
-        recentTests: rows.length,
-        performanceRecords: rows
-      });
+
+      db.all(
+        `SELECT performance_tests.*, athletes.fullName AS athleteName
+         FROM performance_tests
+         LEFT JOIN athletes ON performance_tests.athlete_id = athletes.id
+         WHERE performance_tests.user_id = ?
+         ORDER BY performance_tests.timestamp DESC`,
+        [req.user.id],
+        (err, rows) => {
+          if (err) return res.status(500).json({ error: err.message });
+          res.json({
+            totalAthletes: countRow.count,
+            recentTests: rows.length,
+            performanceRecords: rows
+          });
+        }
+      );
     }
   );
 });

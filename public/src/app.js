@@ -36,9 +36,15 @@ function updateNav(section) {
   const nav = document.getElementById('navBar');
   if (!nav) return;
   nav.innerHTML = `
-    <button onclick="show('entry')" class="py-2 px-4 bg-yellow-500 text-white rounded">Test Entry</button>
-    <button onclick="show('dashboard')" class="py-2 px-4 bg-purple-500 text-white rounded">Dashboard</button>
-    <button onclick="logout()" class="py-2 px-4 bg-blue-600 text-white rounded">Logout</button>
+    <button onclick="show('entry')" class="px-6 py-2 text-white hover:text-yellow-400 transition-colors font-semibold">
+      <i class="fas fa-chart-line mr-2"></i>Test Entry
+    </button>
+    <button onclick="show('dashboard')" class="px-6 py-2 text-white hover:text-yellow-400 transition-colors font-semibold">
+      <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+    </button>
+    <button onclick="logout()" class="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-full transition-all font-semibold">
+      <i class="fas fa-sign-out-alt mr-2"></i>Logout
+    </button>
   `;
 }
 
@@ -57,40 +63,19 @@ function logout() {
 
 // Load athletes dynamically
 async function loadAthletes() {
+  const res = await fetch('/api/athletes', {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  const data = await res.json();
   const select = document.getElementById('athleteSelect');
   select.innerHTML = '';
 
-  // Always add the placeholder
-  const placeholder = document.createElement('option');
-  placeholder.value = '';
-  placeholder.textContent = 'Select Athlete';
-  select.appendChild(placeholder);
-
-  try {
-    const res = await fetch('/api/athletes', {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    const data = await res.json();
-
-    if (!Array.isArray(data)) {
-      // Show error in dropdown or alert
-      const errorOption = document.createElement('option');
-      errorOption.value = '';
-      errorOption.textContent = data.error || data.message || 'Failed to load athletes';
-      select.appendChild(errorOption);
-      throw new Error(data.error || data.message || 'Failed to load athletes');
-    }
-
-    data.forEach(user => {
-      const option = document.createElement('option');
-      option.value = user.id;
-      option.textContent = user.fullName;
-      select.appendChild(option);
-    });
-  } catch (err) {
-    console.error('Error loading athletes:', err);
-    // Optionally show an error message in the UI
-  }
+  data.forEach(user => {
+    const option = document.createElement('option');
+    option.value = user.id;
+    option.textContent = user.fullName;
+    select.appendChild(option);
+  });
 
   const addNew = document.createElement('option');
   addNew.value = 'add_new';
@@ -108,6 +93,7 @@ document.getElementById('athleteSelect').addEventListener('change', e => {
 document.getElementById('entryForm').addEventListener('submit', async e => {
   e.preventDefault();
   const test = {
+    athlete_id: document.getElementById('athleteSelect').value,
     injury: document.getElementById('injury').value,
     squatR: +document.getElementById('squatR').value,
     squatL: +document.getElementById('squatL').value,
@@ -146,9 +132,14 @@ async function loadDashboard() {
 
   const tbody = document.getElementById('dashboardTable');
   tbody.innerHTML = '';
+  if (!Array.isArray(data.performanceRecords)) {
+    alert(data.error || "Failed to load dashboard data.");
+    return;
+  }
+
   data.performanceRecords.forEach(record => {
     const row = `<tr class="border-t">
-      <td class="py-2 px-4">${record.injury}</td>
+      <td class="py-2 px-4">${record.athleteName}</td>
       <td class="py-2 px-4">${record.timestamp}</td>
       <td class="py-2 px-4">${record.squatR}</td>
       <td class="py-2 px-4">${record.squatL}</td>

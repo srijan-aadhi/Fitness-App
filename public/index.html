@@ -3,59 +3,252 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Fitness App</title>
+  <title>Fitness Performance Tracker</title>
   <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-100">
-  <div id="app" class="container mx-auto p-4">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
     
-    <!-- Nav placeholder (updated by JS) -->
-    <nav id="navBar" class="flex space-x-4 mb-4"></nav>
+    * {
+      font-family: 'Inter', sans-serif;
+    }
+    
+    .hero-bg {
+      background: linear-gradient(135deg, rgba(0,0,0,0.7), rgba(0,0,0,0.5)), 
+                  url('https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+    }
+    
+    .gradient-text {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+    
+    .card {
+      backdrop-filter: blur(10px);
+      background: rgba(255, 255, 255, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      transition: all 0.3s ease;
+    }
+    
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    }
+    
+    .nav-glass {
+      backdrop-filter: blur(10px);
+      background: rgba(0, 0, 0, 0.9);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .stats-card {
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      color: white;
+    }
+  </style>
+</head>
+<body class="bg-gray-50">
+  
+  <!-- Navigation -->
+  <nav class="nav-glass fixed w-full top-0 z-50">
+    <div class="container mx-auto px-6 py-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <i class="fas fa-dumbbell text-2xl text-white"></i>
+          <span class="text-xl font-bold text-white">FitTracker Pro</span>
+        </div>
+        <div id="navBar" class="flex space-x-4"></div>
+      </div>
+    </div>
+  </nav>
 
-    <!-- Test Entry -->
+  <!-- Hero Section -->
+  <section class="hero-bg min-h-screen flex items-center justify-center text-center text-white pt-20">
+    <div class="container mx-auto px-6">
+      <div class="max-w-4xl mx-auto">
+        <h1 class="text-6xl md:text-7xl font-bold mb-6 leading-tight">
+          OUR <span class="gradient-text">MISSION</span>
+        </h1>
+        <p class="text-xl md:text-2xl mb-8 leading-relaxed opacity-90">
+          Make Human Movements Efficient & Integrate to real life through Science & Evidence. 
+          Which empowers people to <span class="font-bold text-yellow-400">MOVE FORWARD</span> 
+          in their Life and achieve worthwhile <span class="font-bold text-yellow-400">PURPOSES</span>.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mt-12">
+          <button onclick="show('entry')" class="btn-primary px-8 py-4 rounded-full text-white font-semibold text-lg">
+            <i class="fas fa-chart-line mr-2"></i>Start Performance Test
+          </button>
+          <button onclick="show('dashboard')" class="bg-transparent border-2 border-white px-8 py-4 rounded-full text-white font-semibold text-lg hover:bg-white hover:text-black transition-all">
+            <i class="fas fa-tachometer-alt mr-2"></i>View Dashboard
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="container mx-auto px-6 py-12">
+    
+    <!-- Test Entry Section -->
     <div id="entry" class="hidden">
-      <h2 class="text-2xl mb-4">Performance Test Entry</h2>
-      <form id="entryForm" class="space-y-4">
-        <select id="athleteSelect" class="w-full p-2 border rounded">
-          <option value="">Select Athlete</option>
-          <!-- Athlete options will be populated dynamically -->
-          <option value="add_new">➕ Add New Athlete</option>
-        </select>
-
-        <textarea id="injury" placeholder="Current Injury or Surgery" class="w-full p-2 border rounded"></textarea>
-        <input type="number" id="squatR" placeholder="Squat (Right)" class="w-full p-2 border rounded"/>
-        <input type="number" id="squatL" placeholder="Squat (Left)" class="w-full p-2 border rounded"/>
-        <input type="number" id="pull" placeholder="Pull" class="w-full p-2 border rounded"/>
-        <input type="number" id="push" placeholder="Push" class="w-full p-2 border rounded"/>
-        <input type="text" id="test24" placeholder="2.4km Test Time" class="w-full p-2 border rounded"/>
-        <button type="submit" class="w-full py-2 bg-yellow-600 text-white rounded">Submit Test</button>
-      </form>
+      <div class="text-center mb-12">
+        <h2 class="text-4xl font-bold text-gray-800 mb-4">Performance Test Entry</h2>
+        <p class="text-xl text-gray-600">Track and analyze athlete performance with precision</p>
+      </div>
+      
+      <div class="max-w-4xl mx-auto">
+        <div class="card rounded-2xl p-8 shadow-lg">
+          <form id="entryForm" class="space-y-6">
+            <div class="grid md:grid-cols-2 gap-6">
+              <div>
+                <label for="athleteSelect" class="block font-semibold text-gray-700 mb-2">
+                  <i class="fas fa-user mr-2"></i>Select Athlete
+                </label>
+                <select id="athleteSelect" class="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                  <option value="">Choose an athlete...</option>
+                  <option value="add_new">➕ Add New Athlete</option>
+                </select>
+              </div>
+              
+              <div>
+                <label for="injury" class="block font-semibold text-gray-700 mb-2">
+                  <i class="fas fa-band-aid mr-2"></i>Current Injury/Surgery
+                </label>
+                <textarea id="injury" placeholder="Describe any current injuries or recent surgeries..." 
+                         class="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent h-20"></textarea>
+              </div>
+            </div>
+            
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div>
+                <label for="squatR" class="block font-semibold text-gray-700 mb-2">
+                  <i class="fas fa-arrows-alt-v mr-2"></i>Squat (Right)
+                </label>
+                <input type="number" id="squatR" placeholder="0" 
+                       class="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"/>
+              </div>
+              
+              <div>
+                <label for="squatL" class="block font-semibold text-gray-700 mb-2">
+                  <i class="fas fa-arrows-alt-v mr-2"></i>Squat (Left)
+                </label>
+                <input type="number" id="squatL" placeholder="0" 
+                       class="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"/>
+              </div>
+              
+              <div>
+                <label for="pull" class="block font-semibold text-gray-700 mb-2">
+                  <i class="fas fa-hand-rock mr-2"></i>Pull Test
+                </label>
+                <input type="number" id="pull" placeholder="0" 
+                       class="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"/>
+              </div>
+              
+              <div>
+                <label for="push" class="block font-semibold text-gray-700 mb-2">
+                  <i class="fas fa-hand-paper mr-2"></i>Push Test
+                </label>
+                <input type="number" id="push" placeholder="0" 
+                       class="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"/>
+              </div>
+            </div>
+            
+            <div>
+              <label for="test24" class="block font-semibold text-gray-700 mb-2">
+                <i class="fas fa-stopwatch mr-2"></i>2.4km Test Time
+              </label>
+              <input type="text" id="test24" placeholder="e.g., 12:30" 
+                     class="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"/>
+            </div>
+            
+            <button type="submit" class="btn-primary w-full py-4 text-white rounded-xl font-semibold text-lg">
+              <i class="fas fa-save mr-2"></i>Submit Performance Test
+            </button>
+          </form>
+        </div>
+      </div>
     </div>
 
-    <!-- Dashboard -->
+    <!-- Dashboard Section -->
     <div id="dashboard" class="hidden">
-      <h2 class="text-2xl mb-4">Dashboard Overview</h2>
-      <div class="grid grid-cols-2 gap-4 mb-4">
-        <div class="bg-white p-4 rounded shadow">Total Athletes: <span id="totalAthletes">0</span></div>
-        <div class="bg-white p-4 rounded shadow">Recent Tests: <span id="recentTests">0</span></div>
+      <div class="text-center mb-12">
+        <h2 class="text-4xl font-bold text-gray-800 mb-4">Dashboard Overview</h2>
+        <p class="text-xl text-gray-600">Comprehensive performance analytics and insights</p>
       </div>
-      <table class="min-w-full bg-white rounded shadow">
-        <thead class="bg-gray-200">
-          <tr>
-            <th class="py-2 px-4">Athlete</th>
-            <th class="py-2 px-4">Test Date</th>
-            <th class="py-2 px-4">Squat R</th>
-            <th class="py-2 px-4">Squat L</th>
-            <th class="py-2 px-4">Pull</th>
-            <th class="py-2 px-4">Push</th>
-            <th class="py-2 px-4">2.4km</th>
-          </tr>
-        </thead>
-        <tbody id="dashboardTable"></tbody>
-      </table>
+      
+      <!-- Stats Cards -->
+      <div class="grid md:grid-cols-2 gap-8 mb-12">
+        <div class="stats-card p-8 rounded-2xl shadow-lg">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-blue-100 text-lg">Total Athletes</p>
+              <p class="text-4xl font-bold" id="totalAthletes">0</p>
+            </div>
+            <i class="fas fa-users text-4xl opacity-20"></i>
+          </div>
+        </div>
+        
+        <div class="stats-card p-8 rounded-2xl shadow-lg">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-blue-100 text-lg">Recent Tests</p>
+              <p class="text-4xl font-bold" id="recentTests">0</p>
+            </div>
+            <i class="fas fa-chart-bar text-4xl opacity-20"></i>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Performance Table -->
+      <div class="card rounded-2xl shadow-lg overflow-hidden">
+        <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
+          <h3 class="text-xl font-semibold text-gray-800">
+            <i class="fas fa-table mr-2"></i>Performance Records
+          </h3>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="min-w-full">
+            <thead class="bg-gray-100">
+              <tr>
+                <th class="py-4 px-6 text-left font-semibold text-gray-700">Athlete</th>
+                <th class="py-4 px-6 text-left font-semibold text-gray-700">Test Date</th>
+                <th class="py-4 px-6 text-left font-semibold text-gray-700">Squat R</th>
+                <th class="py-4 px-6 text-left font-semibold text-gray-700">Squat L</th>
+                <th class="py-4 px-6 text-left font-semibold text-gray-700">Pull</th>
+                <th class="py-4 px-6 text-left font-semibold text-gray-700">Push</th>
+                <th class="py-4 px-6 text-left font-semibold text-gray-700">2.4km</th>
+              </tr>
+            </thead>
+            <tbody id="dashboardTable" class="divide-y divide-gray-200"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
     
   </div>
+  
+  <!-- WhatsApp Float Button -->
+  <div class="fixed bottom-6 right-6 z-40">
+    <a href="#" class="bg-green-500 hover:bg-green-600 text-white rounded-full p-4 shadow-lg transition-all hover:scale-110">
+      <i class="fab fa-whatsapp text-2xl"></i>
+    </a>
+  </div>
+  
   <script src="/src/app.js"></script>
 </body>
 </html>
