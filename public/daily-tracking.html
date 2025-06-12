@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Daily Wellness Tracking - FitTracker Pro</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <script src="src/daily-tracking.js" defer></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    * {
+      font-family: 'Inter', sans-serif;
+    }
+    
+    .nav-glass {
+      backdrop-filter: blur(10px);
+      background: rgba(0, 0, 0, 0.9);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-secondary {
+      background: #6b7280;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-secondary:hover {
+      background: #4b5563;
+      transform: translateY(-2px);
+    }
+    
+    .card {
+      backdrop-filter: blur(10px);
+      background: rgba(255, 255, 255, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      transition: all 0.3s ease;
+    }
+    
+    .page-bg {
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      min-height: 100vh;
+    }
+    
+    .radio-group {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.5rem;
+    }
+    
+    .radio-option {
+      position: relative;
+    }
+    
+    .radio-option input[type="radio"] {
+      position: absolute;
+      opacity: 0;
+    }
+    
+    .radio-option label {
+      display: block;
+      padding: 12px 16px;
+      background: white;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-align: center;
+      font-weight: 500;
+    }
+    
+    .radio-option input[type="radio"]:checked + label {
+      background: #3b82f6;
+      color: white;
+      border-color: #3b82f6;
+    }
+    
+    .radio-option input[type="radio"]:hover + label {
+      border-color: #3b82f6;
+    }
+    
+    .step-indicator {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 2rem;
+    }
+    
+    .step-indicator .step {
+      flex: 1;
+      max-width: 200px;
+      text-align: center;
+      position: relative;
+    }
+    
+    .step-indicator .step:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      top: 15px;
+      right: -50%;
+      width: 100%;
+      height: 2px;
+      background: #e5e7eb;
+      z-index: 1;
+    }
+    
+    .step-indicator .step.active::after {
+      background: #3b82f6;
+    }
+    
+    .step-indicator .step .step-circle {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: #e5e7eb;
+      color: #6b7280;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 8px;
+      font-weight: bold;
+      position: relative;
+      z-index: 2;
+    }
+    
+    .step-indicator .step.active .step-circle {
+      background: #3b82f6;
+      color: white;
+    }
+    
+    .step-indicator .step.completed .step-circle {
+      background: #10b981;
+      color: white;
+    }
+    
+    #signatureCanvas {
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      cursor: crosshair;
+      display: block;
+      margin: 0 auto;
+    }
+    
+    #signatureCanvas:focus {
+      border-color: #3b82f6;
+      outline: none;
+    }
+  </style>
+</head>
+<body class="page-bg">
+  
+  <!-- Navigation -->
+  <nav class="nav-glass">
+    <div class="container mx-auto px-6 py-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <i class="fas fa-dumbbell text-2xl text-white"></i>
+          <span class="text-xl font-bold text-white">FitTracker Pro</span>
+        </div>
+        <div class="flex space-x-4">
+          <button onclick="window.location.href='index.html'" class="px-6 py-2 text-white hover:text-yellow-400 transition-colors font-semibold">
+            <i class="fas fa-chart-line mr-2"></i>Test Entry
+          </button>
+          <button onclick="window.location.href='index.html'" class="px-6 py-2 text-white hover:text-yellow-400 transition-colors font-semibold">
+            <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+          </button>
+          <button onclick="logout()" class="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-full transition-all font-semibold">
+            <i class="fas fa-sign-out-alt mr-2"></i>Logout
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container mx-auto px-6 py-12">
+    <div class="text-center mb-12 pt-8">
+      <h1 class="text-4xl font-bold text-gray-800 mb-4">
+        <i class="fas fa-calendar-day mr-3 text-green-600"></i>Daily Wellness Tracking
+      </h1>
+      <p class="text-xl text-gray-600">Track your daily nutrition and lifestyle habits</p>
+    </div>
+    
+    <!-- Step Indicator -->
+    <div class="step-indicator max-w-4xl mx-auto">
+      <div class="step active" id="step1Indicator">
+        <div class="step-circle">1</div>
+        <div class="text-sm font-medium text-gray-700">Nutrition & Meals</div>
+      </div>
+      <div class="step" id="step2Indicator">
+        <div class="step-circle">2</div>
+        <div class="text-sm font-medium text-gray-700">Sleep & Wellness</div>
+      </div>
+    </div>
+    
+    <div class="max-w-4xl mx-auto">
+      <div class="card rounded-2xl p-8 shadow-lg">
+        <form id="dailyTrackingForm" class="space-y-8">
+          
+          <!-- Step 1: Nutrition & Meals -->
+          <div id="step1" class="form-step">
+            <!-- Previous Day Date -->
+            <div>
+              <label for="previousDay" class="block font-semibold text-gray-700 mb-3">
+                <i class="fas fa-calendar mr-2"></i>Previous Day *
+              </label>
+              <input type="date" id="previousDay" required 
+                     class="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+              <p class="text-sm text-gray-500 mt-1">Format: dd-MMM-yyyy</p>
+            </div>
+
+            <!-- Appetite Level -->
+            <div>
+              <label class="block font-semibold text-gray-700 mb-3">
+                <i class="fas fa-utensils mr-2"></i>Previous Day Appetite (Hunger Level) *
+              </label>
+              <div class="radio-group">
+                <div class="radio-option">
+                  <input type="radio" id="appetite_very_high" name="appetite" value="Very High" required>
+                  <label for="appetite_very_high">Very High</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="appetite_high" name="appetite" value="High">
+                  <label for="appetite_high">High</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="appetite_normal" name="appetite" value="Normal">
+                  <label for="appetite_normal">Normal</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="appetite_poor" name="appetite" value="Poor">
+                  <label for="appetite_poor">Poor</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="appetite_eat_because" name="appetite" value="Eat Because">
+                  <label for="appetite_eat_because">Eat Because</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="appetite_skipped" name="appetite" value="Did not eat (Skipping)">
+                  <label for="appetite_skipped">Did not eat (Skipping)</label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Water Intake -->
+            <div>
+              <label class="block font-semibold text-gray-700 mb-3">
+                <i class="fas fa-tint mr-2"></i>Previous Day Amount of Water Intake (Litres)? *
+              </label>
+              <div class="radio-group">
+                <div class="radio-option">
+                  <input type="radio" id="water_1" name="waterIntake" value="1" required>
+                  <label for="water_1">1L</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="water_1_5" name="waterIntake" value="1.5">
+                  <label for="water_1_5">1.5L</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="water_2" name="waterIntake" value="2">
+                  <label for="water_2">2L</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="water_2_5" name="waterIntake" value="2.5">
+                  <label for="water_2_5">2.5L</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="water_3" name="waterIntake" value="3">
+                  <label for="water_3">3L</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="water_3_5" name="waterIntake" value="3.5">
+                  <label for="water_3_5">3.5L</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="water_4" name="waterIntake" value="4">
+                  <label for="water_4">4L</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="water_4_5" name="waterIntake" value="4.5">
+                  <label for="water_4_5">4.5L</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="water_5" name="waterIntake" value="5">
+                  <label for="water_5">5L</label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Breakfast Time -->
+            <div>
+              <label class="block font-semibold text-gray-700 mb-3">
+                <i class="fas fa-coffee mr-2"></i>Previous Day Breakfast Time *
+              </label>
+              <div class="radio-group">
+                <div class="radio-option">
+                  <input type="radio" id="breakfast_7_8" name="breakfastTime" value="7 - 8a.m." required>
+                  <label for="breakfast_7_8">7 - 8a.m.</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="breakfast_8_9" name="breakfastTime" value="8 - 9a.m.">
+                  <label for="breakfast_8_9">8 - 9a.m.</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="breakfast_9_10" name="breakfastTime" value="9 - 10a.m.">
+                  <label for="breakfast_9_10">9 - 10a.m.</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="breakfast_10_11" name="breakfastTime" value="10 - 11a.m.">
+                  <label for="breakfast_10_11">10 - 11a.m.</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="breakfast_skip_time" name="breakfastTime" value="Skipped It (I don't have time)">
+                  <label for="breakfast_skip_time">Skipped It (No time)</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="breakfast_skip_like" name="breakfastTime" value="Skipped It (I don't like eating)">
+                  <label for="breakfast_skip_like">Skipped It (Don't like eating)</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="breakfast_other" name="breakfastTime" value="Other">
+                  <label for="breakfast_other">Other</label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Lunch Time -->
+            <div>
+              <label class="block font-semibold text-gray-700 mb-3">
+                <i class="fas fa-hamburger mr-2"></i>Previous Day Lunch Time *
+              </label>
+              <div class="radio-group">
+                <div class="radio-option">
+                  <input type="radio" id="lunch_12_1" name="lunchTime" value="12 - 1p.m." required>
+                  <label for="lunch_12_1">12 - 1p.m.</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="lunch_1_2" name="lunchTime" value="1 - 2p.m.">
+                  <label for="lunch_1_2">1 - 2p.m.</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="lunch_2_3" name="lunchTime" value="2 - 3p.m.">
+                  <label for="lunch_2_3">2 - 3p.m.</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="lunch_3_4" name="lunchTime" value="3 - 4p.m.">
+                  <label for="lunch_3_4">3 - 4p.m.</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="lunch_skip_time" name="lunchTime" value="Skipped It (I don't have time)">
+                  <label for="lunch_skip_time">Skipped It (No time)</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="lunch_skip_like" name="lunchTime" value="Skipped It (I don't like eating)">
+                  <label for="lunch_skip_like">Skipped It (Don't like eating)</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="lunch_other" name="lunchTime" value="Other">
+                  <label for="lunch_other">Other</label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Snack Time -->
+            <div>
+              <label class="block font-semibold text-gray-700 mb-3">
+                <i class="fas fa-cookie-bite mr-2"></i>Previous Day Snack Time *
+              </label>
+              <div class="radio-group">
+                <div class="radio-option">
+                  <input type="radio" id="snack_3_4" name="snackTime" value="3 - 4p.m." required>
+                  <label for="snack_3_4">3 - 4p.m.</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="snack_4_5" name="snackTime" value="4 - 5p.m.">
+                  <label for="snack_4_5">4 - 5p.m.</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="snack_5_6" name="snackTime" value="5 - 6p.m.">
+                  <label for="snack_5_6">5 - 6p.m.</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="snack_6_7" name="snackTime" value="6 - 7p.m.">
+                  <label for="snack_6_7">6 - 7p.m.</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="snack_skip_time" name="snackTime" value="Skipped It (I don't have time)">
+                  <label for="snack_skip_time">Skipped It (No time)</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="snack_skip_like" name="snackTime" value="Skipped It (I don't like eating)">
+                  <label for="snack_skip_like">Skipped It (Don't like eating)</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="snack_other" name="snackTime" value="Other">
+                  <label for="snack_other">Other</label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Dinner Time -->
+            <div>
+              <label class="block font-semibold text-gray-700 mb-3">
+                <i class="fas fa-pizza-slice mr-2"></i>Previous Day Dinner Time *
+              </label>
+              <div class="radio-group">
+                <div class="radio-option">
+                  <input type="radio" id="dinner_6_7" name="dinnerTime" value="6 - 7p.m." required>
+                  <label for="dinner_6_7">6 - 7p.m.</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="dinner_7_8" name="dinnerTime" value="7 - 8p.m.">
+                  <label for="dinner_7_8">7 - 8p.m.</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="dinner_8_9" name="dinnerTime" value="8 - 9p.m.">
+                  <label for="dinner_8_9">8 - 9p.m.</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="dinner_9_10" name="dinnerTime" value="9 - 10p.m.">
+                  <label for="dinner_9_10">9 - 10p.m.</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="dinner_10_11" name="dinnerTime" value="10 - 11p.m.">
+                  <label for="dinner_10_11">10 - 11p.m.</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="dinner_skip_time" name="dinnerTime" value="Skipped It (I don't have time)">
+                  <label for="dinner_skip_time">Skipped It (No time)</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="dinner_skip_like" name="dinnerTime" value="Skipped It (I don't like eating)">
+                  <label for="dinner_skip_like">Skipped It (Don't like eating)</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="dinner_other" name="dinnerTime" value="Other">
+                  <label for="dinner_other">Other</label>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Step 1 Navigation -->
+            <div class="flex justify-end">
+              <button type="button" id="nextStep" class="btn-primary px-8 py-4 text-white rounded-xl font-semibold text-lg">
+                <i class="fas fa-arrow-right mr-2"></i>Next: Sleep & Wellness
+              </button>
+            </div>
+          </div>
+
+          <!-- Step 2: Sleep & Psychological Traits -->
+          <div id="step2" class="form-step hidden">
+            <h3 class="text-2xl font-bold text-gray-800 mb-6 text-center">
+              <i class="fas fa-bed mr-3 text-purple-600"></i>DSNC Members Attendance & Psychological Traits
+            </h3>
+
+            <!-- Sleep Length -->
+            <div>
+              <label class="block font-semibold text-gray-700 mb-3">
+                <i class="fas fa-clock mr-2"></i>Previous Day's Length (Hours) of Sleep? *
+              </label>
+              <div class="radio-group">
+                <div class="radio-option">
+                  <input type="radio" id="sleep_1" name="sleepLength" value="1" required>
+                  <label for="sleep_1">1 Hour</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="sleep_2" name="sleepLength" value="2">
+                  <label for="sleep_2">2 Hours</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="sleep_3" name="sleepLength" value="3">
+                  <label for="sleep_3">3 Hours</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="sleep_4" name="sleepLength" value="4">
+                  <label for="sleep_4">4 Hours</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="sleep_5" name="sleepLength" value="5">
+                  <label for="sleep_5">5 Hours</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="sleep_6" name="sleepLength" value="6">
+                  <label for="sleep_6">6 Hours</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="sleep_7" name="sleepLength" value="7">
+                  <label for="sleep_7">7 Hours</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="sleep_8" name="sleepLength" value="8">
+                  <label for="sleep_8">8 Hours</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="sleep_9" name="sleepLength" value="9">
+                  <label for="sleep_9">9 Hours</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="sleep_10" name="sleepLength" value="10">
+                  <label for="sleep_10">10 Hours</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="sleep_11" name="sleepLength" value="11">
+                  <label for="sleep_11">11 Hours</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="sleep_12" name="sleepLength" value="12">
+                  <label for="sleep_12">12 Hours</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="sleep_other" name="sleepLength" value="Other">
+                  <label for="sleep_other">Other</label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sleep Quality -->
+            <div>
+              <label class="block font-semibold text-gray-700 mb-3">
+                <i class="fas fa-bed mr-2"></i>Previous Day's Quality of Sleep *
+              </label>
+              <div class="radio-group">
+                <div class="radio-option">
+                  <input type="radio" id="quality_very_deep" name="sleepQuality" value="Very Deep" required>
+                  <label for="quality_very_deep">Very Deep</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="quality_normal" name="sleepQuality" value="Normal">
+                  <label for="quality_normal">Normal</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="quality_restless" name="sleepQuality" value="Restless">
+                  <label for="quality_restless">Restless</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="quality_bad_breaks" name="sleepQuality" value="Bad with Breaks">
+                  <label for="quality_bad_breaks">Bad with Breaks</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="quality_not_at_all" name="sleepQuality" value="Not at all">
+                  <label for="quality_not_at_all">Not at all</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="quality_other" name="sleepQuality" value="Other">
+                  <label for="quality_other">Other</label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tiredness Sensation -->
+            <div>
+              <label class="block font-semibold text-gray-700 mb-3">
+                <i class="fas fa-user-clock mr-2"></i>Tiredness Sensation (When you get up, this morning how did you feel?) *
+              </label>
+              <div class="radio-group">
+                <div class="radio-option">
+                  <input type="radio" id="tiredness_very_rested" name="tiredness" value="Very Rested" required>
+                  <label for="tiredness_very_rested">Very Rested</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="tiredness_normal" name="tiredness" value="Normal">
+                  <label for="tiredness_normal">Normal</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="tiredness_tired" name="tiredness" value="Tired">
+                  <label for="tiredness_tired">Tired</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="tiredness_very_tired" name="tiredness" value="Very Tired">
+                  <label for="tiredness_very_tired">Very Tired</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="tiredness_painful" name="tiredness" value="Painful Tiredness">
+                  <label for="tiredness_painful">Painful Tiredness</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="tiredness_other" name="tiredness" value="Other">
+                  <label for="tiredness_other">Other</label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Signature -->
+            <div>
+              <label class="block font-semibold text-gray-700 mb-3">
+                <i class="fas fa-signature mr-2"></i>Signature *
+              </label>
+              <div class="text-center">
+                <canvas id="signatureCanvas" width="600" height="200"></canvas>
+                <div class="mt-4 space-x-4">
+                  <button type="button" id="clearSignature" class="btn-secondary px-4 py-2 text-white rounded-lg font-semibold">
+                    <i class="fas fa-eraser mr-2"></i>Clear
+                  </button>
+                  <p class="text-sm text-gray-500 mt-2">Draw your signature above</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 2 Navigation -->
+            <div class="flex justify-between">
+              <button type="button" id="prevStep" class="btn-secondary px-8 py-4 text-white rounded-xl font-semibold text-lg">
+                <i class="fas fa-arrow-left mr-2"></i>Back
+              </button>
+              <button type="submit" class="btn-primary px-8 py-4 text-white rounded-xl font-semibold text-lg">
+                <i class="fas fa-save mr-2"></i>Submit Daily Tracking
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+      
+      <!-- Success/Error Messages -->
+      <div class="text-center mt-8">
+        <p id="successMessage" class="hidden bg-green-100 text-green-800 p-4 rounded-xl border border-green-200 text-lg font-semibold">
+          <i class="fas fa-check-circle mr-2"></i>Daily tracking submitted successfully!
+        </p>
+        <p id="errorMessage" class="hidden bg-red-100 text-red-800 p-4 rounded-xl border border-red-200 text-lg font-semibold">
+          <i class="fas fa-exclamation-circle mr-2"></i>Failed to submit tracking. Please try again.
+        </p>
+        
+        <button onclick="window.location.href='index.html'" class="btn-primary px-8 py-3 rounded-xl mt-4 font-semibold">
+          <i class="fas fa-arrow-left mr-2"></i>Go Back to Dashboard
+        </button>
+      </div>
+    </div>
+  </main>
+  
+  <script>
+    function logout() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('userRole');
+      window.location.href = '/login.html';
+    }
+
+    // Set default date to yesterday
+    document.addEventListener('DOMContentLoaded', function() {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      document.getElementById('previousDay').value = yesterday.toISOString().split('T')[0];
+    });
+  </script>
+</body>
+</html> 

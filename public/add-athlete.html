@@ -70,6 +70,19 @@
   </nav>
 
   <main class="container mx-auto px-6 py-12">
+    <!-- Role Check Warning -->
+    <div id="roleWarning" class="hidden max-w-2xl mx-auto mb-8">
+      <div class="bg-yellow-100 border border-yellow-400 text-yellow-800 p-4 rounded-xl">
+        <div class="flex items-center">
+          <i class="fas fa-exclamation-triangle mr-3 text-xl"></i>
+          <div>
+            <h3 class="font-semibold">Access Restricted</h3>
+            <p>You need <strong>Tester role or higher</strong> to add new athletes. Please contact an administrator to upgrade your account.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="text-center mb-12 pt-8">
       <h1 class="text-4xl font-bold text-gray-800 mb-4">
         <i class="fas fa-user-plus mr-3 text-blue-600"></i>Add New Athlete
@@ -149,8 +162,36 @@
   <script>
     function logout() {
       localStorage.removeItem('token');
+      localStorage.removeItem('userRole');
       window.location.href = '/login.html';
     }
+
+    // Check user role on page load
+    function checkUserRole() {
+      const userRole = localStorage.getItem('userRole') || 'Athlete';
+      const roleHierarchy = {
+        'Athlete': 1,
+        'Tester': 2, 
+        'Admin': 3,
+        'Super Admin': 4
+      };
+      
+      if ((roleHierarchy[userRole] || 1) < 2) {
+        // User doesn't have permission
+        document.getElementById('roleWarning').classList.remove('hidden');
+        document.getElementById('addAthleteForm').style.opacity = '0.5';
+        document.getElementById('addAthleteForm').style.pointerEvents = 'none';
+      }
+      
+      // Add role indicator
+      const roleIndicator = document.createElement('div');
+      roleIndicator.className = 'fixed bottom-4 left-4 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold z-50 shadow-lg';
+      roleIndicator.textContent = `Role: ${userRole}`;
+      document.body.appendChild(roleIndicator);
+    }
+
+    // Run role check when page loads
+    checkUserRole();
   </script>
 </body>
 </html>

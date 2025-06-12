@@ -4,6 +4,21 @@ document.getElementById('addAthleteForm').addEventListener('submit', async (e) =
   const token = localStorage.getItem('token');
   if (!token) {
     alert('You are not logged in.');
+    window.location.href = '/login.html';
+    return;
+  }
+
+  // Check user role before attempting to create athlete
+  const userRole = localStorage.getItem('userRole') || 'Athlete';
+  const roleHierarchy = {
+    'Athlete': 1,
+    'Tester': 2, 
+    'Admin': 3,
+    'Super Admin': 4
+  };
+  
+  if ((roleHierarchy[userRole] || 1) < 2) {
+    alert('Access denied: You need Tester role or higher to add new athletes. Please contact an administrator to upgrade your account.');
     return;
   }
 
@@ -36,12 +51,28 @@ document.getElementById('addAthleteForm').addEventListener('submit', async (e) =
       document.getElementById('goBackBtn').classList.remove('hidden');
       document.getElementById('addAthleteForm').reset();
     } else {
-      document.getElementById('errorMessage').textContent = data.error || data.message || 'Failed to add athlete.';
+      // Handle specific error messages
+      let errorText = 'Failed to add athlete.';
+      
+      if (res.status === 403) {
+        errorText = 'Access denied: You need Tester role or higher to add athletes. Please contact an administrator.';
+      } else if (res.status === 401) {
+        errorText = 'Your session has expired. Please log in again.';
+        setTimeout(() => {
+          localStorage.removeItem('token');
+          localStorage.removeItem('userRole');
+          window.location.href = '/login.html';
+        }, 2000);
+      } else if (data.error || data.message) {
+        errorText = data.error || data.message;
+      }
+      
+      document.getElementById('errorMessage').textContent = errorText;
       document.getElementById('errorMessage').classList.remove('hidden');
     }
   } catch (err) {
     console.error('Error:', err);
-    document.getElementById('errorMessage').textContent = 'Something went wrong. Try again.';
+    document.getElementById('errorMessage').textContent = 'Network error. Please check your connection and try again.';
     document.getElementById('errorMessage').classList.remove('hidden');
   }
 });
