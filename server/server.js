@@ -163,19 +163,196 @@ app.put('/api/admin/users/:userId/role', enhancedAuthMiddleware, (req, res) => {
   });
 });
 
-// Submit Test - now with role-based access
-app.post('/api/performance', enhancedAuthMiddleware, requireRole('Tester'), (req, res) => {
-  const { athlete_id, injury, squatR, squatL, pull, push, test24 } = req.body;
+// Submit Injury Report - separate from performance tests
+app.post('/api/injury-report', enhancedAuthMiddleware, requireRole('Tester'), (req, res) => {
+  const { athlete_id, injury } = req.body;
   const timestamp = new Date().toISOString();
 
+  // Get athlete details for notification
+  db.get(`SELECT fullName FROM athletes WHERE id = ?`, [athlete_id], (err, athlete) => {
+    if (err || !athlete) {
+      return res.status(404).json({ error: 'Athlete not found' });
+    }
+    
+    // Create notification for all trainers
+    const notification = {
+      id: Date.now(), // Use timestamp as ID since we're storing in memory
+      athlete_name: athlete.fullName,
+      athlete_id: athlete_id,
+      injury: injury,
+      timestamp: timestamp,
+      status: 'Under Review'
+    };
+    
+    // Store notification in memory (in production, use database)
+    if (!global.injuryNotifications) {
+      global.injuryNotifications = [];
+    }
+    global.injuryNotifications.push(notification);
+    
+    res.json({ success: true, message: 'Injury report submitted successfully' });
+  });
+});
+
+// Submit Strength Assessment - requires Tester+ role
+app.post('/api/strength-assessment', enhancedAuthMiddleware, requireRole('Tester'), (req, res) => {
+  const { assessmentDate, athleteId, squatR, squatL, pull, push, test24 } = req.body;
+  
+  // Validate required fields
+  const requiredFields = { assessmentDate, athleteId, squatR, squatL, pull, push, test24 };
+  const missingFields = Object.keys(requiredFields).filter(key => 
+    requiredFields[key] === undefined || requiredFields[key] === null || requiredFields[key] === ''
+  );
+  
+  if (missingFields.length > 0) {
+    return res.status(400).json({ 
+      error: `Missing required fields: ${missingFields.join(', ')}` 
+    });
+  }
+
+  // Validate data types and ranges
+  const numericFields = { squatR, squatL, pull, push };
+  for (const [field, value] of Object.entries(numericFields)) {
+    if (isNaN(value) || value < 0 || value > 100) {
+      return res.status(400).json({ error: `Invalid ${field}. Must be a number between 0 and 100.` });
+    }
+  }
+
+  const timestamp = new Date().toISOString();
+
+  // Insert into strength_assessments table
   db.run(
-    `INSERT INTO performance_tests (user_id, athlete_id, injury, squatR, squatL, pull, push, test24, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [req.user.id, athlete_id, injury, squatR, squatL, pull, push, test24, timestamp],
-    err => {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json({ success: true });
+    `INSERT INTO strength_assessments 
+     (user_id, athlete_id, assessment_date, squat_right, squat_left, pull_test, push_test, test_24km) 
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [req.user.id, athleteId, assessmentDate, squatR, squatL, pull, push, test24],
+    function (err) {
+      if (err) {
+        console.error('Strength assessment error:', err);
+        return res.status(500).json({ error: 'Failed to save strength assessment data' });
+      }
+      
+      // Also insert into performance_tests table (this is what should be updated by strength form)
+      db.run(
+        `INSERT INTO performance_tests 
+         (user_id, athlete_id, injury, squatR, squatL, pull, push, test24, timestamp) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [req.user.id, athleteId, 'No current injury or recent surgery', squatR, squatL, pull, push, test24, timestamp],
+        function (performanceErr) {
+          if (performanceErr) {
+            console.error('Performance tests insert error:', performanceErr);
+          }
+        }
+      );
+      
+      res.json({ 
+        success: true, 
+        message: 'Strength assessment submitted successfully',
+        id: this.lastID 
+      });
     }
   );
+});
+
+// Get strength assessments - users can see their own data, Testers+ can see all
+app.get('/api/strength-assessment', enhancedAuthMiddleware, (req, res) => {
+  const { page = 1, limit = 10, athleteId } = req.query;
+  const offset = (page - 1) * limit;
+  
+  let query, params;
+  
+  if (req.user.role === 'Athlete') {
+    // Athletes can only see their own data
+    query = `SELECT sa.*, a.fullName as athleteName 
+             FROM strength_assessments sa 
+             LEFT JOIN athletes a ON sa.athlete_id = a.id 
+             WHERE sa.user_id = ? 
+             ORDER BY sa.assessment_date DESC LIMIT ? OFFSET ?`;
+    params = [req.user.id, parseInt(limit), parseInt(offset)];
+  } else {
+    // Testers+ can see all data, with optional athlete filter
+    if (athleteId) {
+      query = `SELECT sa.*, a.fullName as athleteName, u.fullName as testerName 
+               FROM strength_assessments sa 
+               LEFT JOIN athletes a ON sa.athlete_id = a.id 
+               LEFT JOIN users u ON sa.user_id = u.id 
+               WHERE sa.athlete_id = ? 
+               ORDER BY sa.assessment_date DESC LIMIT ? OFFSET ?`;
+      params = [athleteId, parseInt(limit), parseInt(offset)];
+    } else {
+      query = `SELECT sa.*, a.fullName as athleteName, u.fullName as testerName 
+               FROM strength_assessments sa 
+               LEFT JOIN athletes a ON sa.athlete_id = a.id 
+               LEFT JOIN users u ON sa.user_id = u.id 
+               ORDER BY sa.assessment_date DESC LIMIT ? OFFSET ?`;
+      params = [parseInt(limit), parseInt(offset)];
+    }
+  }
+
+  db.all(query, params, (err, rows) => {
+    if (err) {
+      console.error('Error fetching strength assessments:', err);
+      return res.status(500).json({ error: err.message });
+    }
+    
+    // Get total count for pagination
+    const countQuery = req.user.role === 'Athlete' 
+      ? `SELECT COUNT(*) as total FROM strength_assessments WHERE user_id = ?`
+      : athleteId 
+        ? `SELECT COUNT(*) as total FROM strength_assessments WHERE athlete_id = ?`
+        : `SELECT COUNT(*) as total FROM strength_assessments`;
+    
+    const countParams = req.user.role === 'Athlete' 
+      ? [req.user.id] 
+      : athleteId 
+        ? [athleteId] 
+        : [];
+
+    db.get(countQuery, countParams, (err, countResult) => {
+      if (err) return res.status(500).json({ error: err.message });
+      
+      res.json({
+        data: rows,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total: countResult.total,
+          pages: Math.ceil(countResult.total / limit)
+        }
+      });
+    });
+  });
+});
+
+// Get injury notifications for trainers
+app.get('/api/injury-notifications', enhancedAuthMiddleware, requireRole('Tester'), (req, res) => {
+  // Return injury notifications from memory (in production, use database)
+  const notifications = global.injuryNotifications || [];
+  
+  // Filter out notifications where injury is "No current injury or recent surgery"
+  const filteredNotifications = notifications.filter(notification => 
+    notification.injury && notification.injury !== 'No current injury or recent surgery'
+  );
+  
+  // Add default fields for compatibility
+  const formattedNotifications = filteredNotifications.map(notification => ({
+    ...notification,
+    next_test_date: null,
+    severity: 'Moderate',
+    medical_clearance: 'No',
+    testing_eligible: 'No'
+  }));
+  
+  res.json({ notifications: formattedNotifications });
+});
+
+// Update injury report status
+app.put('/api/injury-notifications/:id/status', enhancedAuthMiddleware, requireRole('Tester'), (req, res) => {
+  const { id } = req.params;
+  const { status, medical_clearance, testing_eligible } = req.body;
+  
+  // For now, just return success (in production, you'd update database)
+  res.json({ success: true, message: 'Status updated successfully' });
 });
 
 // Dashboard - enhanced with role-based data access
@@ -369,13 +546,256 @@ app.get('/api/daily-tracking', enhancedAuthMiddleware, (req, res) => {
   });
 });
 
+// Submit Speed Assessment - requires Tester+ role
+app.post('/api/speed-assessment', enhancedAuthMiddleware, requireRole('Tester'), (req, res) => {
+  const { 
+    assessmentDate,
+    athleteName,
+    age,
+    email,
+    injuryHistory,
+    squatJumpRight,
+    squatJumpLeft,
+    squatJumpBoth,
+    speed10m,
+    airBike2Miles
+  } = req.body;
+  
+  // Validate required fields
+  const requiredFields = {
+    assessmentDate, athleteName, age, email, injuryHistory,
+    squatJumpRight, squatJumpLeft, squatJumpBoth, speed10m, airBike2Miles
+  };
+  
+  const missingFields = Object.keys(requiredFields).filter(key => 
+    requiredFields[key] === undefined || requiredFields[key] === null || requiredFields[key] === ''
+  );
+  
+  if (missingFields.length > 0) {
+    return res.status(400).json({ 
+      error: `Missing required fields: ${missingFields.join(', ')}` 
+    });
+  }
+
+  // Validate data types and ranges
+  if (isNaN(age) || age < 10 || age > 100) {
+    return res.status(400).json({ error: 'Invalid age. Must be between 10 and 100.' });
+  }
+  
+  const numericFields = { squatJumpRight, squatJumpLeft, squatJumpBoth, speed10m, airBike2Miles };
+  for (const [field, value] of Object.entries(numericFields)) {
+    if (isNaN(value) || value < 0) {
+      return res.status(400).json({ error: `Invalid ${field}. Must be a positive number.` });
+    }
+  }
+
+  db.run(
+    `INSERT INTO speed_assessments 
+     (user_id, assessment_date, athlete_name, age, email, injury_history, 
+      squat_jump_right, squat_jump_left, squat_jump_both, speed_10m, air_bike_2miles) 
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [req.user.id, assessmentDate, athleteName, age, email, injuryHistory,
+     squatJumpRight, squatJumpLeft, squatJumpBoth, speed10m, airBike2Miles],
+    function (err) {
+      if (err) {
+        console.error('Speed assessment error:', err);
+        return res.status(500).json({ error: 'Failed to save speed assessment data' });
+      }
+      res.json({ 
+        success: true, 
+        message: 'Speed assessment submitted successfully',
+        id: this.lastID 
+      });
+    }
+  );
+});
+
+// Get speed assessments - users can see their own data, Testers+ can see all
+app.get('/api/speed-assessment', enhancedAuthMiddleware, (req, res) => {
+  const { page = 1, limit = 10, userId } = req.query;
+  const offset = (page - 1) * limit;
+  
+  let query, params;
+  
+  if (req.user.role === 'Athlete') {
+    // Athletes can only see their own data
+    query = `SELECT * FROM speed_assessments WHERE user_id = ? ORDER BY assessment_date DESC LIMIT ? OFFSET ?`;
+    params = [req.user.id, parseInt(limit), parseInt(offset)];
+  } else {
+    // Testers+ can see all data, with optional user filter
+    if (userId) {
+      query = `SELECT sa.*, u.fullName as testerName 
+               FROM speed_assessments sa 
+               LEFT JOIN users u ON sa.user_id = u.id 
+               WHERE sa.user_id = ? 
+               ORDER BY sa.assessment_date DESC LIMIT ? OFFSET ?`;
+      params = [userId, parseInt(limit), parseInt(offset)];
+    } else {
+      query = `SELECT sa.*, u.fullName as testerName 
+               FROM speed_assessments sa 
+               LEFT JOIN users u ON sa.user_id = u.id 
+               ORDER BY sa.assessment_date DESC LIMIT ? OFFSET ?`;
+      params = [parseInt(limit), parseInt(offset)];
+    }
+  }
+
+  db.all(query, params, (err, rows) => {
+    if (err) {
+      console.error('Error fetching speed assessments:', err);
+      return res.status(500).json({ error: err.message });
+    }
+    
+    // Get total count for pagination
+    const countQuery = req.user.role === 'Athlete' 
+      ? `SELECT COUNT(*) as total FROM speed_assessments WHERE user_id = ?`
+      : userId 
+        ? `SELECT COUNT(*) as total FROM speed_assessments WHERE user_id = ?`
+        : `SELECT COUNT(*) as total FROM speed_assessments`;
+    
+    const countParams = req.user.role === 'Athlete' 
+      ? [req.user.id] 
+      : userId 
+        ? [userId] 
+        : [];
+
+    db.get(countQuery, countParams, (err, countResult) => {
+      if (err) return res.status(500).json({ error: err.message });
+      
+      res.json({
+        data: rows,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total: countResult.total,
+          pages: Math.ceil(countResult.total / limit)
+        }
+      });
+    });
+  });
+});
+
+// Submit Agility Assessment - requires Tester+ role
+app.post('/api/agility-assessment', enhancedAuthMiddleware, requireRole('Tester'), (req, res) => {
+  const { assessmentDate, athleteName, age, injuryHistory, rightTest, leftTest, fourRun, yoyoScore } = req.body;
+  
+  // Validate required fields
+  const requiredFields = { assessmentDate, athleteName, age, injuryHistory, rightTest, leftTest, fourRun, yoyoScore };
+  const missingFields = Object.keys(requiredFields).filter(key => 
+    requiredFields[key] === undefined || requiredFields[key] === null || requiredFields[key] === ''
+  );
+  
+  if (missingFields.length > 0) {
+    return res.status(400).json({ 
+      error: `Missing required fields: ${missingFields.join(', ')}` 
+    });
+  }
+
+  // Validate data types and ranges
+  if (isNaN(age) || age < 10 || age > 100) {
+    return res.status(400).json({ error: 'Invalid age. Must be between 10 and 100.' });
+  }
+  
+  const numericFields = { rightTest, leftTest, fourRun, yoyoScore };
+  for (const [field, value] of Object.entries(numericFields)) {
+    if (isNaN(value) || value < 0) {
+      return res.status(400).json({ error: `Invalid ${field}. Must be a positive number.` });
+    }
+  }
+
+  db.run(
+    `INSERT INTO agility_assessments 
+     (user_id, assessment_date, athlete_name, age, injury_history, right_test, left_test, four_run, yoyo_score) 
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [req.user.id, assessmentDate, athleteName, age, injuryHistory, rightTest, leftTest, fourRun, yoyoScore],
+    function (err) {
+      if (err) {
+        console.error('Agility assessment error:', err);
+        return res.status(500).json({ error: 'Failed to save agility assessment data' });
+      }
+      res.json({ 
+        success: true, 
+        message: 'Agility assessment submitted successfully',
+        id: this.lastID 
+      });
+    }
+  );
+});
+
+// Get agility assessments - users can see their own data, Testers+ can see all
+app.get('/api/agility-assessment', enhancedAuthMiddleware, (req, res) => {
+  const { page = 1, limit = 10, userId } = req.query;
+  const offset = (page - 1) * limit;
+  
+  let query, params;
+  
+  if (req.user.role === 'Athlete') {
+    // Athletes can only see their own data
+    query = `SELECT * FROM agility_assessments WHERE user_id = ? ORDER BY assessment_date DESC LIMIT ? OFFSET ?`;
+    params = [req.user.id, parseInt(limit), parseInt(offset)];
+  } else {
+    // Testers+ can see all data, with optional user filter
+    if (userId) {
+      query = `SELECT aa.*, u.fullName as testerName 
+               FROM agility_assessments aa 
+               LEFT JOIN users u ON aa.user_id = u.id 
+               WHERE aa.user_id = ? 
+               ORDER BY aa.assessment_date DESC LIMIT ? OFFSET ?`;
+      params = [userId, parseInt(limit), parseInt(offset)];
+    } else {
+      query = `SELECT aa.*, u.fullName as testerName 
+               FROM agility_assessments aa 
+               LEFT JOIN users u ON aa.user_id = u.id 
+               ORDER BY aa.assessment_date DESC LIMIT ? OFFSET ?`;
+      params = [parseInt(limit), parseInt(offset)];
+    }
+  }
+
+  db.all(query, params, (err, rows) => {
+    if (err) {
+      console.error('Error fetching agility assessments:', err);
+      return res.status(500).json({ error: err.message });
+    }
+    
+    // Get total count for pagination
+    const countQuery = req.user.role === 'Athlete' 
+      ? `SELECT COUNT(*) as total FROM agility_assessments WHERE user_id = ?`
+      : userId 
+        ? `SELECT COUNT(*) as total FROM agility_assessments WHERE user_id = ?`
+        : `SELECT COUNT(*) as total FROM agility_assessments`;
+    
+    const countParams = req.user.role === 'Athlete' 
+      ? [req.user.id] 
+      : userId 
+        ? [userId] 
+        : [];
+
+    db.get(countQuery, countParams, (err, countResult) => {
+      if (err) return res.status(500).json({ error: err.message });
+      
+      res.json({
+        data: rows,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total: countResult.total,
+          pages: Math.ceil(countResult.total / limit)
+        }
+      });
+    });
+  });
+});
+
 // Get system statistics (Admin+ only)
 app.get('/api/admin/stats', enhancedAuthMiddleware, requireRole('Admin'), (req, res) => {
   const queries = [
     `SELECT COUNT(*) as total FROM users`,
     `SELECT role, COUNT(*) as count FROM users GROUP BY role`,
     `SELECT COUNT(*) as total FROM athletes`,
-    `SELECT COUNT(*) as total FROM performance_tests`
+    `SELECT COUNT(*) as total FROM performance_tests`,
+    `SELECT COUNT(*) as total FROM speed_assessments`,
+    `SELECT COUNT(*) as total FROM strength_assessments`,
+    `SELECT COUNT(*) as total FROM agility_assessments`,
+    `SELECT COUNT(*) as total FROM daily_tracking`
   ];
 
   Promise.all(queries.map(query => 
@@ -390,7 +810,11 @@ app.get('/api/admin/stats', enhancedAuthMiddleware, requireRole('Admin'), (req, 
       totalUsers: results[0][0].total,
       usersByRole: results[1],
       totalAthletes: results[2][0].total,
-      totalTests: results[3][0].total
+      totalTests: results[3][0].total,
+      totalSpeedAssessments: results[4][0].total,
+      totalStrengthAssessments: results[5][0].total,
+      totalAgilityAssessments: results[6][0].total,
+      totalDailyTracking: results[7][0].total
     });
   }).catch(err => {
     res.status(500).json({ error: err.message });

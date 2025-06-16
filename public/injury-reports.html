@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DSNC - Injury Reports & Testing Eligibility</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f8fafc;
+    }
+    
+    .status-under-review {
+      background: #fef3c7;
+      color: #92400e;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    
+    .status-cleared {
+      background: #d1fae5;
+      color: #065f46;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    
+    .btn-clear {
+      background: #10b981;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: none;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn-clear:hover {
+      background: #059669;
+    }
+    
+    .btn-restrict {
+      background: #ef4444;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: none;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn-restrict:hover {
+      background: #dc2626;
+    }
+    
+    .btn-review {
+      background: #6b7280;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: none;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn-review:hover {
+      background: #4b5563;
+    }
+    
+    .injury-card {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      border: 1px solid #e5e7eb;
+    }
+    
+    .nav-tab {
+      padding: 12px 24px;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      font-weight: 500;
+      color: #6b7280;
+      transition: all 0.2s;
+    }
+    
+    .nav-tab.active {
+      color: #111827;
+      border-bottom-color: #111827;
+    }
+    
+    .nav-tab:hover {
+      color: #111827;
+    }
+    
+    .stats-badge {
+      background: #fef2f2;
+      color: #991b1b;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    
+    .stats-badge.cleared {
+      background: #f0fdf4;
+      color: #166534;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="bg-white border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center py-4">
+        <div class="flex items-center space-x-3">
+          <div class="bg-gray-900 text-white w-12 h-12 rounded-lg flex items-center justify-center font-bold text-lg">
+            DN
+          </div>
+          <div>
+            <h1 class="text-xl font-bold text-gray-900">DSNC</h1>
+            <p class="text-sm text-gray-500">Super Admin Dashboard</p>
+          </div>
+        </div>
+        <div class="flex items-center space-x-4">
+          <button onclick="window.location.href='index.html#dashboard'" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">
+            <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+          </button>
+          <button class="p-2 text-gray-400 hover:text-gray-600">
+            <i class="fas fa-bell text-lg"></i>
+          </button>
+          <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+            <i class="fas fa-user text-sm text-gray-600"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation Tabs -->
+  <nav class="bg-white border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex space-x-8">
+        <button class="nav-tab" onclick="window.location.href='index.html#dashboard'">
+          <i class="fas fa-home mr-2"></i>Main Dashboard
+        </button>
+
+        <button class="nav-tab active">
+          <i class="fas fa-exclamation-triangle mr-2"></i>Injury Reports
+        </button>
+        <button class="nav-tab" onclick="window.location.href='add-athlete.html'">
+          <i class="fas fa-user-plus mr-2"></i>Athlete Registrations
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header with Stats -->
+    <div class="flex justify-between items-center mb-6">
+      <div>
+        <h2 class="text-2xl font-bold text-gray-900">Injury Reports & Testing Eligibility</h2>
+      </div>
+      <div class="flex space-x-4">
+        <span class="stats-badge">
+          <span id="underReviewCount">1</span> Under Review
+        </span>
+        <span class="stats-badge cleared">
+          <span id="clearedCount">1</span> Cleared
+        </span>
+      </div>
+    </div>
+
+    <!-- Injury Reports List -->
+    <div id="injuryReports">
+      <!-- Loading message -->
+      <div id="loadingMessage" class="text-center py-8">
+        <i class="fas fa-spinner fa-spin text-2xl text-gray-400 mb-2"></i>
+        <p class="text-gray-500">Loading injury reports...</p>
+      </div>
+      
+      <!-- Reports will be loaded here -->
+    </div>
+  </main>
+
+  <script>
+    let token = localStorage.getItem('token');
+    let injuryReports = [];
+
+    // Check authentication
+    if (!token) {
+      window.location.href = 'login.html';
+    }
+
+    // Load injury reports
+    async function loadInjuryReports() {
+      try {
+        const res = await fetch('/api/injury-notifications', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        if (!res.ok) {
+          throw new Error('Failed to load injury reports');
+        }
+        
+        const data = await res.json();
+        injuryReports = data.notifications || [];
+        renderInjuryReports();
+      } catch (err) {
+        console.error('Error loading injury reports:', err);
+        document.getElementById('loadingMessage').innerHTML = `
+          <i class="fas fa-exclamation-triangle text-2xl text-red-400 mb-2"></i>
+          <p class="text-red-500">Failed to load injury reports. Please try again.</p>
+        `;
+      }
+    }
+
+    // Render injury reports
+    function renderInjuryReports() {
+      const container = document.getElementById('injuryReports');
+      const loadingMessage = document.getElementById('loadingMessage');
+      
+      // Hide loading message if it exists
+      if (loadingMessage) {
+        loadingMessage.style.display = 'none';
+      }
+      
+      if (injuryReports.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12">
+            <i class="fas fa-clipboard-list text-4xl text-gray-300 mb-4"></i>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">No Injury Reports</h3>
+            <p class="text-gray-500">No injury reports have been submitted yet.</p>
+          </div>
+        `;
+        return;
+      }
+
+      // Update stats
+      const underReview = injuryReports.filter(r => r.status === 'Under Review').length;
+      const cleared = injuryReports.filter(r => r.status === 'Cleared').length;
+      document.getElementById('underReviewCount').textContent = underReview;
+      document.getElementById('clearedCount').textContent = cleared;
+
+      // Render reports
+      const reportsHTML = injuryReports.map(report => `
+        <div class="injury-card">
+          <div class="flex justify-between items-start mb-4">
+            <div class="flex items-center space-x-3">
+              <div class="w-3 h-3 rounded-full ${report.status === 'Under Review' ? 'bg-yellow-400' : 'bg-green-400'}"></div>
+              <div>
+                <h3 class="text-lg font-semibold text-gray-900">${report.athlete_name || 'Unknown Athlete'}</h3>
+                <p class="text-sm text-gray-500">ID: ATH${String(report.id).padStart(3, '0')} • ${getInjuryType(report.injury)}</p>
+              </div>
+            </div>
+            <span class="${report.status === 'Under Review' ? 'status-under-review' : 'status-cleared'}">
+              ${report.status}
+            </span>
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div>
+              <p class="text-sm font-medium text-gray-700">Severity</p>
+              <p class="text-sm text-gray-900">${report.severity || 'Moderate'}</p>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-gray-700">Date Reported</p>
+              <p class="text-sm text-gray-900">${new Date(report.timestamp).toLocaleDateString()}</p>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-gray-700">Next Test Date</p>
+              <p class="text-sm text-gray-900">${getNextTestDate(report.timestamp)}</p>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-gray-700">Description</p>
+              <p class="text-sm text-gray-900">${report.injury}</p>
+            </div>
+          </div>
+          
+          <div class="flex justify-between items-center pt-4 border-t border-gray-200">
+            <div class="flex space-x-4 text-sm">
+              <span><strong>Medical Clearance:</strong> <span class="${report.medical_clearance === 'Yes' ? 'text-green-600' : 'text-red-600'}">${report.medical_clearance || 'No'}</span></span>
+              <span><strong>Testing Eligible:</strong> <span class="${report.testing_eligible === 'Yes' ? 'text-green-600' : 'text-red-600'}">${report.testing_eligible || 'No'}</span></span>
+            </div>
+            <div class="flex space-x-2">
+              <button class="btn-clear" onclick="updateStatus(${report.id}, 'Cleared')">
+                <i class="fas fa-check mr-1"></i>Clear
+              </button>
+              <button class="btn-restrict" onclick="updateStatus(${report.id}, 'Restricted')">
+                <i class="fas fa-times mr-1"></i>Restrict
+              </button>
+              <button class="btn-review" onclick="viewDetails(${report.id})">
+                <i class="fas fa-eye mr-1"></i>Review
+              </button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      container.innerHTML = reportsHTML;
+    }
+
+    // Get injury type from description
+    function getInjuryType(description) {
+      if (description.toLowerCase().includes('ankle')) return 'Ankle Sprain';
+      if (description.toLowerCase().includes('shoulder')) return 'Shoulder Strain';
+      if (description.toLowerCase().includes('knee')) return 'Knee Injury';
+      return 'General Injury';
+    }
+
+    // Calculate next test date (12 days from report date)
+    function getNextTestDate(timestamp) {
+      const date = new Date(timestamp);
+      date.setDate(date.getDate() + 12);
+      return date.toLocaleDateString();
+    }
+
+    // Update injury status
+    async function updateStatus(id, status) {
+      try {
+        const res = await fetch(`/api/injury-notifications/${id}/status`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ 
+            status, 
+            medical_clearance: status === 'Cleared' ? 'Yes' : 'No',
+            testing_eligible: status === 'Cleared' ? 'Yes' : 'No'
+          })
+        });
+
+        if (res.ok) {
+          // Update local data
+          const report = injuryReports.find(r => r.id === id);
+          if (report) {
+            report.status = status;
+            report.medical_clearance = status === 'Cleared' ? 'Yes' : 'No';
+            report.testing_eligible = status === 'Cleared' ? 'Yes' : 'No';
+            renderInjuryReports();
+          }
+          alert(`Status updated to ${status} successfully!`);
+        } else {
+          alert('Failed to update status. Please try again.');
+        }
+      } catch (err) {
+        console.error('Error updating status:', err);
+        alert('Network error. Please try again.');
+      }
+    }
+
+    // View details
+    function viewDetails(id) {
+      const report = injuryReports.find(r => r.id === id);
+      if (report) {
+        alert(`Injury Details:\n\nAthlete: ${report.athlete_name}\nDate: ${new Date(report.timestamp).toLocaleDateString()}\nDescription: ${report.injury}\nStatus: ${report.status}`);
+      }
+    }
+
+    // Initialize
+    loadInjuryReports();
+  </script>
+</body>
+</html> 

@@ -70,6 +70,7 @@ db.serialize(() => {
   db.run(`CREATE TABLE IF NOT EXISTS performance_tests (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER,
+    athlete_id INTEGER,
     injury TEXT,
     squatR INTEGER,
     squatL INTEGER,
@@ -77,8 +78,16 @@ db.serialize(() => {
     push INTEGER,
     test24 TEXT,
     timestamp TEXT,
-    FOREIGN KEY(user_id) REFERENCES users(id)
+    FOREIGN KEY(user_id) REFERENCES users(id),
+    FOREIGN KEY(athlete_id) REFERENCES athletes(id)
   )`);
+
+  // Add athlete_id column to existing performance_tests table if it doesn't exist
+  db.run(`ALTER TABLE performance_tests ADD COLUMN athlete_id INTEGER`, (err) => {
+    if (err && !err.message.includes('duplicate column name')) {
+      console.error('Error adding athlete_id column to performance_tests:', err.message);
+    }
+  });
 
   db.run(`CREATE TABLE IF NOT EXISTS athletes (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -134,6 +143,63 @@ db.serialize(() => {
       console.error('Error adding signature column:', err.message);
     }
   });
+
+  // Create speed assessments table
+  db.run(`CREATE TABLE IF NOT EXISTS speed_assessments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    assessment_date DATE,
+    athlete_name TEXT,
+    age INTEGER,
+    email TEXT,
+    injury_history TEXT,
+    squat_jump_right REAL,
+    squat_jump_left REAL,
+    squat_jump_both REAL,
+    speed_10m REAL,
+    air_bike_2miles REAL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(user_id) REFERENCES users(id)
+  )`);
+
+  // Create strength assessments table
+  db.run(`CREATE TABLE IF NOT EXISTS strength_assessments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    athlete_id INTEGER,
+    assessment_date DATE,
+    squat_right REAL,
+    squat_left REAL,
+    pull_test REAL,
+    push_test REAL,
+    test_24km TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(user_id) REFERENCES users(id),
+    FOREIGN KEY(athlete_id) REFERENCES athletes(id)
+  )`);
+
+  // Add test_24km column to existing strength_assessments table if it doesn't exist
+  db.run(`ALTER TABLE strength_assessments ADD COLUMN test_24km TEXT`, (err) => {
+    if (err && !err.message.includes('duplicate column name')) {
+      console.error('Error adding test_24km column:', err.message);
+    }
+  });
+
+  // Create agility assessments table
+  db.run(`CREATE TABLE IF NOT EXISTS agility_assessments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    assessment_date DATE,
+    athlete_name TEXT,
+    age INTEGER,
+    injury_history TEXT,
+    right_test REAL,
+    left_test REAL,
+    four_run REAL,
+    yoyo_score REAL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(user_id) REFERENCES users(id)
+  )`);
 
   // Create a default Super Admin user if none exists
   db.get(`SELECT COUNT(*) as count FROM users WHERE role = 'Super Admin'`, async (err, row) => {

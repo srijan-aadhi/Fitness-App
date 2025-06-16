@@ -1,0 +1,586 @@
+# Backend Documentation - DSNC Fitness App
+
+## Overview
+The DSNC Fitness App backend is a RESTful API server built with Node.js and Express.js, featuring a comprehensive role-based authentication system, SQLite database for data persistence, and robust API endpoints for fitness tracking and athlete management.
+
+## Technical Stack
+
+### Core Technologies
+- **Node.js** - JavaScript runtime environment
+- **Express.js v5.1.0** - Web application framework
+- **SQLite3 v5.1.7** - Lightweight database engine
+- **JWT (jsonwebtoken v9.0.2)** - Token-based authentication
+- **bcryptjs v3.0.2** - Password hashing and verification
+
+### Dependencies
+```json
+{
+  "bcryptjs": "^3.0.2",      // Password hashing
+  "body-parser": "^2.2.0",  // Request body parsing
+  "cors": "^2.8.5",         // Cross-origin resource sharing
+  "dotenv": "^16.5.0",      // Environment variable management
+  "express": "^5.1.0",      // Web framework
+  "jsonwebtoken": "^9.0.2", // JWT token management
+  "sqlite3": "^5.1.7"       // SQLite database driver
+}
+```
+
+## Project Structure
+
+```
+server/
+├── server.js              # Main server application
+├── db.js                  # Database configuration and models
+├── auth.js                # Authentication middleware
+database/
+├── db.sqlite              # SQLite database file
+├── role-management.sql    # Role management scripts
+├── migrate-timestamps.sql # Database migration scripts
+└── ROLES_DOCUMENTATION.md # Role system documentation
+```
+
+## Database Architecture
+
+### Database Schema
+
+#### Users Table
+```sql
+CREATE TABLE users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  fullName TEXT NOT NULL,
+  email TEXT UNIQUE NOT NULL,
+  password TEXT NOT NULL,
+  role TEXT DEFAULT 'Athlete',
+  dob TEXT,
+  gender TEXT,
+  sport TEXT,
+  contact TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+#### Athletes Table
+```sql
+CREATE TABLE athletes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  fullName TEXT NOT NULL,
+  dob TEXT,
+  gender TEXT,
+  sport TEXT,
+  contact TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+#### Performance Tests Table
+```sql
+CREATE TABLE performance_tests (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER,
+  athlete_id INTEGER,
+  injury TEXT,
+  timestamp TEXT,
+  squatR REAL,
+  squatL REAL,
+  pull REAL,
+  push REAL,
+  test24 REAL,
+  FOREIGN KEY (user_id) REFERENCES users (id),
+  FOREIGN KEY (athlete_id) REFERENCES athletes (id)
+);
+```
+
+#### Daily Tracking Table
+```sql
+CREATE TABLE daily_tracking (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER,
+  date TEXT,
+  sleep_length INTEGER,
+  sleep_quality TEXT,
+  tiredness TEXT,
+  signature TEXT,
+  timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users (id)
+);
+```
+
+### Role-Based Access Control System
+
+#### Role Hierarchy
+1. **Super Admin** (Level 4) - Full system access
+2. **Admin** (Level 3) - User and system management
+3. **Tester** (Level 2) - Athlete management and testing
+4. **Athlete** (Level 1) - Basic access, own data only
+
+#### Role Permissions Matrix
+```javascript
+const USER_ROLES = {
+  'Super Admin': {
+    level: 4,
+    permissions: ['*'] // All permissions
+  },
+  'Admin': {
+    level: 3,
+    permissions: ['manage_users', 'view_all_data', 'manage_testers']
+  },
+  'Tester': {
+    level: 2,
+    permissions: ['manage_athletes', 'submit_tests', 'view_athlete_data']
+  },
+  'Athlete': {
+    level: 1,
+    permissions: ['view_own_data', 'submit_daily_tracking']
+  }
+};
+```
+
+## API Endpoints
+
+### Authentication Endpoints
+
+#### POST /api/auth/signup
+**Purpose:** User registration with role assignment
+```javascript
+// Request Body
+{
+  "fullName": "John Doe",
+  "email": "john@example.com",
+  "password": "securePassword",
+  "role": "Athlete", // Optional, defaults to "Athlete"
+  "dob": "1990-01-01",
+  "gender": "Male",
+  "sport": "Basketball",
+  "contact": "+1234567890"
+}
+
+// Response
+{
+  "token": "jwt_token_here",
+  "role": "Athlete"
+}
+```
+
+#### POST /api/auth/login
+**Purpose:** User authentication and token generation
+```javascript
+// Request Body
+{
+  "email": "john@example.com",
+  "password": "securePassword"
+}
+
+// Response
+{
+  "token": "jwt_token_here",
+  "role": "Athlete",
+  "userId": 123
+}
+```
+
+#### GET /api/auth/profile
+**Purpose:** Get current user profile information
+**Authentication:** Required
+```javascript
+// Response
+{
+  "id": 123,
+  "fullName": "John Doe",
+  "email": "john@example.com",
+  "role": "Athlete",
+  "dob": "1990-01-01",
+  "gender": "Male",
+  "sport": "Basketball",
+  "contact": "+1234567890"
+}
+```
+
+### User Management Endpoints (Admin+)
+
+#### GET /api/admin/users
+**Purpose:** Get paginated list of all users
+**Access:** Admin and Super Admin only
+```javascript
+// Query Parameters
+?page=1&limit=10&role=Tester
+
+// Response
+{
+  "users": [...],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 50,
+    "pages": 5
+  }
+}
+```
+
+#### PUT /api/admin/users/:userId/role
+**Purpose:** Update user role
+**Access:** Role-specific (Super Admin for Admin roles, Admin+ for others)
+```javascript
+// Request Body
+{
+  "role": "Tester"
+}
+
+// Response
+{
+  "message": "User role updated successfully"
+}
+```
+
+### Athlete Management Endpoints
+
+#### GET /api/athletes
+**Purpose:** Get list of athletes (role-filtered)
+**Authentication:** Required
+```javascript
+// Response
+[
+  {
+    "id": 1,
+    "fullName": "Jane Athlete",
+    "dob": "1995-05-15",
+    "gender": "Female",
+    "sport": "Track & Field",
+    "contact": "+1987654321"
+  }
+]
+```
+
+#### POST /api/athletes
+**Purpose:** Create new athlete profile
+**Access:** Tester role or higher
+```javascript
+// Request Body
+{
+  "fullName": "New Athlete",
+  "dob": "1998-03-20",
+  "gender": "Male",
+  "sport": "Soccer",
+  "contact": "+1122334455"
+}
+
+// Response
+{
+  "success": true,
+  "athleteId": 456
+}
+```
+
+### Performance Testing Endpoints
+
+#### POST /api/performance
+**Purpose:** Submit injury form/performance test
+**Access:** Tester role or higher
+```javascript
+// Request Body
+{
+  "athlete_id": 123,
+  "injury": "Twisted ankle during training session. Swelling and pain present."
+}
+
+// Response
+{
+  "success": true
+}
+```
+
+#### POST /api/strength-assessment
+**Purpose:** Submit strength assessment data
+**Access:** Tester role or higher
+```javascript
+// Request Body
+{
+  "assessmentDate": "2024-01-15",
+  "athleteId": 123,
+  "squatR": 85.5,
+  "squatL": 82.3,
+  "pull": 120.0,
+  "push": 95.7,
+  "test24": 15.2
+}
+
+// Response
+{
+  "success": true,
+  "testId": 789
+}
+```
+
+#### POST /api/speed-assessment
+**Purpose:** Submit speed assessment data
+**Access:** Tester role or higher
+
+#### POST /api/agility-assessment
+**Purpose:** Submit agility assessment data
+**Access:** Tester role or higher
+
+### Injury Management Endpoints
+
+#### GET /api/injury-notifications
+**Purpose:** Get injury reports for trainers
+**Access:** Tester role or higher
+```javascript
+// Response
+{
+  "notifications": [
+    {
+      "id": 1,
+      "timestamp": "2024-01-15T10:30:00Z",
+      "injury": "Ankle sprain description...",
+      "athlete_name": "John Athlete",
+      "status": "Under Review",
+      "severity": "Moderate",
+      "medical_clearance": "No",
+      "testing_eligible": "No"
+    }
+  ]
+}
+```
+
+#### PUT /api/injury-notifications/:id/status
+**Purpose:** Update injury report status
+**Access:** Tester role or higher
+```javascript
+// Request Body
+{
+  "status": "Cleared",
+  "medical_clearance": "Yes",
+  "testing_eligible": "Yes"
+}
+
+// Response
+{
+  "success": true,
+  "message": "Status updated successfully"
+}
+```
+
+### Daily Tracking Endpoints
+
+#### POST /api/daily-tracking
+**Purpose:** Submit daily tracking data
+**Authentication:** Required
+```javascript
+// Request Body
+{
+  "date": "2024-01-14",
+  "sleepLength": 8,
+  "sleepQuality": "Normal",
+  "tiredness": "Normal",
+  "signature": "base64_signature_data"
+}
+
+// Response
+{
+  "success": true
+}
+```
+
+### Dashboard Endpoints
+
+#### GET /api/dashboard
+**Purpose:** Get dashboard overview data (role-based)
+**Authentication:** Required
+```javascript
+// Response
+{
+  "totalAthletes": 25,
+  "recentTests": 12,
+  "performanceRecords": [...],
+  "userRole": "Tester"
+}
+```
+
+## Security Implementation
+
+### 1. Authentication Middleware
+```javascript
+const enhancedAuthMiddleware = (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ message: 'Token required' });
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+    if (err) return res.status(401).json({ message: 'Invalid token' });
+    
+    // Fetch user with role information
+    db.get(`SELECT id, email, role FROM users WHERE id = ?`, [decoded.id], (err, user) => {
+      if (err || !user) return res.status(401).json({ message: 'User not found' });
+      req.user = user;
+      next();
+    });
+  });
+};
+```
+
+### 2. Role-Based Authorization
+```javascript
+const requireRole = (minRole) => {
+  return (req, res, next) => {
+    if (!req.user || !req.user.role) {
+      return res.status(403).json({ message: 'Access denied: No role assigned' });
+    }
+    
+    if (!roleHelpers.hasPermission(req.user.role, minRole)) {
+      return res.status(403).json({ message: `Access denied: Requires ${minRole} or higher` });
+    }
+    
+    next();
+  };
+};
+```
+
+### 3. Password Security
+```javascript
+// Password hashing during registration
+const hashedPassword = await bcrypt.hash(password, 10);
+
+// Password verification during login
+const match = await bcrypt.compare(password, user.password);
+```
+
+### 4. JWT Token Management
+```javascript
+// Token generation
+const token = jwt.sign(
+  { id: user.id, email: user.email, role: user.role }, 
+  process.env.JWT_SECRET
+);
+
+// Token verification with role information
+jwt.verify(token, process.env.JWT_SECRET, callback);
+```
+
+## Database Management
+
+### 1. Connection Management
+```javascript
+const sqlite3 = require('sqlite3').verbose();
+const db = new sqlite3.Database('./database/db.sqlite');
+```
+
+### 2. Query Patterns
+```javascript
+// Parameterized queries for security
+db.run(`INSERT INTO users (name, email) VALUES (?, ?)`, [name, email], callback);
+
+// Role-based data filtering
+const userFilter = req.user.role === 'Athlete' ? 'WHERE user_id = ?' : '';
+```
+
+### 3. Transaction Handling
+- Automatic rollback on errors
+- Consistent data state maintenance
+- Foreign key constraint enforcement
+
+## Error Handling
+
+### 1. Global Error Patterns
+```javascript
+try {
+  // API operation
+  res.json({ success: true });
+} catch (err) {
+  console.error('Operation error:', err);
+  res.status(500).json({ error: err.message });
+}
+```
+
+### 2. Validation Error Handling
+- Required field validation
+- Data type validation
+- Range validation for numeric inputs
+- Email format validation
+
+### 3. Database Error Handling
+- Connection error management
+- Constraint violation handling
+- Data integrity maintenance
+
+## Performance Considerations
+
+### 1. Database Optimization
+- Indexed columns for frequently queried fields
+- Efficient query structures
+- Connection pooling ready
+
+### 2. Memory Management
+- Efficient data structures
+- Garbage collection optimization
+- Memory leak prevention
+
+### 3. Caching Strategy
+- Ready for Redis integration
+- Session management optimization
+- Query result caching potential
+
+## Security Best Practices
+
+### 1. Data Protection
+- SQL injection prevention with parameterized queries
+- Password hashing with bcrypt
+- Secure JWT token handling
+- Environment variable protection
+
+### 2. Access Control
+- Role-based authorization at endpoint level
+- Granular permission checking
+- Protected admin operations
+- User data isolation
+
+### 3. Input Validation
+- Server-side validation for all inputs
+- Data sanitization
+- Type checking and range validation
+
+## Deployment Considerations
+
+### 1. Environment Configuration
+```bash
+# .env file structure
+PORT=3000
+JWT_SECRET=your_jwt_secret_key
+NODE_ENV=production
+DB_PATH=./database/db.sqlite
+```
+
+### 2. Database Setup
+- SQLite file initialization
+- Role system setup scripts
+- Data migration scripts
+- Backup and recovery procedures
+
+### 3. Monitoring and Logging
+- Error logging implementation
+- Performance monitoring ready
+- API usage tracking potential
+- Security audit logging
+
+## Future Enhancement Opportunities
+
+### 1. Scalability
+- PostgreSQL migration path
+- Redis caching integration
+- Microservices architecture potential
+- Load balancing ready
+
+### 2. Features
+- Real-time notifications with WebSockets
+- Advanced analytics and reporting
+- File upload capabilities
+- Email notification system
+- API rate limiting
+- Advanced search functionality
+
+### 3. Security
+- OAuth2 integration
+- Two-factor authentication
+- API versioning
+- Request rate limiting
+- Advanced audit logging
+
+This backend provides a solid, secure foundation for the DSNC Fitness App with excellent scalability and maintainability characteristics. 

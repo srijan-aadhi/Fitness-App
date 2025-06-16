@@ -21,7 +21,7 @@ loginForm.addEventListener('submit', async (e) => {
       localStorage.setItem('userRole', data.role || 'Athlete');
       
       console.log('Login successful. Role:', data.role);
-      window.location.href = '/index.html';
+      window.location.href = '/index.html#dashboard';
     } else {
       // Handle specific error messages
       if (res.status === 401) {

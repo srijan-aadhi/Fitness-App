@@ -103,6 +103,12 @@ function updateUIForRole() {
   if (existing) existing.remove();
   
   document.body.appendChild(roleIndicator);
+  
+  // Show injury reports button for trainers (Tester role and above)
+  const injuryReportsBtn = document.getElementById('injuryReportsBtn');
+  if (injuryReportsBtn && (userRole === 'Tester' || userRole === 'Admin' || userRole === 'Super Admin')) {
+    injuryReportsBtn.style.display = 'block';
+  }
 }
 
 // Load athletes dynamically
@@ -120,41 +126,53 @@ async function loadAthletes() {
   placeholder.textContent = 'Choose an athlete...';
   select.appendChild(placeholder);
 
+  // Check if no athletes exist
+  if (!data || data.length === 0) {
+    // Add option to redirect to add athlete page
+    const addAthleteOption = document.createElement('option');
+    addAthleteOption.value = 'add-athlete';
+    addAthleteOption.textContent = 'No athletes found - Click here to add one';
+    addAthleteOption.style.color = '#ef4444';
+    addAthleteOption.style.fontWeight = 'bold';
+    select.appendChild(addAthleteOption);
+    
+    // Add event listener to redirect when selected
+    select.addEventListener('change', function() {
+      if (this.value === 'add-athlete') {
+        if (confirm('No athletes found. Would you like to add an athlete first?')) {
+          window.location.href = 'add-athlete.html';
+        } else {
+          this.value = ''; // Reset selection
+        }
+      }
+    });
+    
+    return;
+  }
+
   data.forEach(user => {
     const option = document.createElement('option');
     option.value = user.id;
     option.textContent = user.fullName;
     select.appendChild(option);
   });
-
-  // Only add "Add New Athlete" option if user has permission
-  if (canCreateAthletes()) {
-    const addNew = document.createElement('option');
-    addNew.value = 'add_new';
-    addNew.textContent = '➕ Add New Athlete';
-    select.appendChild(addNew);
-  } else {
-    // Add disabled option explaining why they can't add athletes
-    const noPermission = document.createElement('option');
-    noPermission.value = 'no_permission';
-    noPermission.textContent = '🔒 Upgrade to Tester role to add athletes';
-    noPermission.disabled = true;
-    select.appendChild(noPermission);
-  }
 }
 
-document.getElementById('athleteSelect').addEventListener('change', e => {
-  if (e.target.value === 'add_new') {
-    if (canCreateAthletes()) {
-      window.location.href = 'add-athlete.html';
-    } else {
-      alert('You need Tester role or higher to add new athletes. Please contact an administrator.');
-      e.target.value = ''; // Reset selection
-    }
-  } else if (e.target.value === 'no_permission') {
-    alert('You need Tester role or higher to add new athletes. Please contact an administrator to upgrade your account.');
-    e.target.value = ''; // Reset selection
-  }
+// Add injury show/hide functionality
+document.addEventListener('DOMContentLoaded', function() {
+  const hasInjuryRadios = document.querySelectorAll('input[name="hasInjury"]');
+  const injuryDescription = document.getElementById('injuryDescription');
+  
+  hasInjuryRadios.forEach(radio => {
+    radio.addEventListener('change', function() {
+      if (this.value === 'yes') {
+        injuryDescription.classList.remove('hidden');
+      } else {
+        injuryDescription.classList.add('hidden');
+        document.getElementById('injury').value = ''; // Clear the text area
+      }
+    });
+  });
 });
 
 // Submit Performance Test
@@ -164,23 +182,37 @@ document.getElementById('entryForm').addEventListener('submit', async e => {
   const athleteId = document.getElementById('athleteSelect').value;
   
   // Check if athlete is selected
-  if (!athleteId || athleteId === 'add_new' || athleteId === 'no_permission') {
+  if (!athleteId) {
     alert('Please select an athlete first.');
     return;
   }
   
+  // Check if injury question is answered
+  const hasInjury = document.querySelector('input[name="hasInjury"]:checked');
+  if (!hasInjury) {
+    alert('Please answer whether you have any current injury or recent surgery.');
+    return;
+  }
+  
+  // Get injury description if they answered yes
+  let injuryDescription = '';
+  if (hasInjury.value === 'yes') {
+    injuryDescription = document.getElementById('injury').value.trim();
+    if (!injuryDescription) {
+      alert('Please describe your injury or recent surgery.');
+      return;
+    }
+  } else {
+    injuryDescription = 'No current injury or recent surgery';
+  }
+  
   const test = {
     athlete_id: athleteId,
-    injury: document.getElementById('injury').value,
-    squatR: +document.getElementById('squatR').value,
-    squatL: +document.getElementById('squatL').value,
-    pull: +document.getElementById('pull').value,
-    push: +document.getElementById('push').value,
-    test24: document.getElementById('test24').value
+    injury: injuryDescription
   };
 
   try {
-    const res = await fetch('/api/performance', {
+    const res = await fetch('/api/injury-report', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -192,9 +224,11 @@ document.getElementById('entryForm').addEventListener('submit', async e => {
     const data = await res.json();
     
     if (res.ok && data.success) {
-      alert('Test submitted successfully!');
-      loadDashboard();
-      show('dashboard');
+      alert('Injury form submitted successfully! Redirecting to daily tracking...');
+      // Redirect to daily tracking after successful submission
+      setTimeout(() => {
+        window.location.href = 'daily-tracking.html';
+      }, 1500);
     } else {
       // Handle specific error messages
       if (res.status === 403) {
@@ -249,9 +283,28 @@ async function loadDashboard() {
 async function init() {
   resetSession();
   await fetchUserProfile(); // Get user role information
-  show('entry');
+  await loadAthletes(); // Load athletes for selection
+  
+  // Default to dashboard, unless entry is specifically requested
+  if (window.location.hash === '#entry') {
+    show('entry');
+  } else {
+    // Default to dashboard on page load/reload
+    show('dashboard');
+    window.location.hash = '#dashboard'; // Update URL to reflect current view
+  }
+  
   loadDashboard();
 }
+
+// Handle hash changes for navigation
+window.addEventListener('hashchange', function() {
+  if (window.location.hash === '#dashboard') {
+    show('dashboard');
+  } else if (window.location.hash === '#entry') {
+    show('entry');
+  }
+});
 
 // Start the application
 init();

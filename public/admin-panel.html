@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Update User Roles</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-2xl mx-auto">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h1 class="text-2xl font-bold text-gray-800 mb-6">
+                    <i class="fas fa-user-shield mr-2"></i>Admin Panel - Update User Roles
+                </h1>
+                
+                <!-- Quick Update for Specific User -->
+                <div class="mb-8 p-4 bg-blue-50 rounded-lg">
+                    <h2 class="text-lg font-semibold text-blue-800 mb-4">Quick Update: Make User a Trainer</h2>
+                    <button onclick="updateSpecificUser()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold">
+                        <i class="fas fa-user-plus mr-2"></i>Make srijanaadhi4@gmail.com a Trainer
+                    </button>
+                    <p class="text-sm text-blue-600 mt-2">This will update the user to Tester role (equivalent to Trainer)</p>
+                </div>
+                
+                <!-- Generic User Role Update -->
+                <div class="border-t pt-6">
+                    <h2 class="text-lg font-semibold text-gray-800 mb-4">Update Any User's Role</h2>
+                    <form id="roleUpdateForm" class="space-y-4">
+                        <div>
+                            <label for="userEmail" class="block font-medium text-gray-700 mb-2">User Email:</label>
+                            <input type="email" id="userEmail" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Enter user email">
+                        </div>
+                        
+                        <div>
+                            <label for="newRole" class="block font-medium text-gray-700 mb-2">New Role:</label>
+                            <select id="newRole" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">Select a role...</option>
+                                <option value="Athlete">Athlete</option>
+                                <option value="Tester">Tester (Trainer)</option>
+                                <option value="Admin">Admin</option>
+                                <option value="Super Admin">Super Admin</option>
+                            </select>
+                        </div>
+                        
+                        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg font-semibold">
+                            <i class="fas fa-save mr-2"></i>Update User Role
+                        </button>
+                    </form>
+                </div>
+                
+                <!-- Current Users List -->
+                <div class="border-t pt-6 mt-8">
+                    <h2 class="text-lg font-semibold text-gray-800 mb-4">Current Users</h2>
+                    <div id="usersList" class="space-y-2">
+                        <div class="text-center py-4">
+                            <i class="fas fa-spinner fa-spin text-2xl text-gray-400 mb-2"></i>
+                            <p class="text-gray-500">Loading users...</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-6 text-center">
+                    <a href="index.html" class="text-blue-600 hover:text-blue-800 font-medium">
+                        <i class="fas fa-arrow-left mr-1"></i>Back to Main App
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let token = localStorage.getItem('token');
+        
+        // Check authentication
+        if (!token) {
+            alert('Please log in first');
+            window.location.href = 'login.html';
+        }
+
+        // Update specific user to trainer
+        async function updateSpecificUser() {
+            const email = 'srijanaadhi4@gmail.com';
+            const role = 'Tester';
+            
+            if (confirm(`Are you sure you want to make ${email} a Trainer (Tester role)?`)) {
+                await updateUserRole(email, role);
+            }
+        }
+
+        // Update user role function
+        async function updateUserRole(email, role) {
+            try {
+                // First, get the user ID
+                const usersRes = await fetch('/api/admin/users', {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                
+                if (!usersRes.ok) {
+                    throw new Error('Failed to fetch users. You might not have admin permissions.');
+                }
+                
+                const userData = await usersRes.json();
+                const user = userData.users.find(u => u.email === email);
+                
+                if (!user) {
+                    alert(`User with email ${email} not found.`);
+                    return;
+                }
+                
+                // Update the role
+                const updateRes = await fetch(`/api/admin/users/${user.id}/role`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ role })
+                });
+                
+                if (updateRes.ok) {
+                    alert(`Successfully updated ${email} to ${role} role!`);
+                    loadUsers(); // Refresh the users list
+                } else {
+                    const errorData = await updateRes.json();
+                    alert(`Failed to update role: ${errorData.message || 'Unknown error'}`);
+                }
+            } catch (err) {
+                console.error('Error updating user role:', err);
+                alert(`Error: ${err.message}`);
+            }
+        }
+
+        // Form submission handler
+        document.getElementById('roleUpdateForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('userEmail').value.trim();
+            const role = document.getElementById('newRole').value;
+            
+            if (!email || !role) {
+                alert('Please fill in both email and role');
+                return;
+            }
+            
+            if (confirm(`Are you sure you want to update ${email} to ${role} role?`)) {
+                await updateUserRole(email, role);
+                // Reset form
+                document.getElementById('userEmail').value = '';
+                document.getElementById('newRole').value = '';
+            }
+        });
+
+        // Load and display users
+        async function loadUsers() {
+            try {
+                const res = await fetch('/api/admin/users', {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                
+                if (!res.ok) {
+                    throw new Error('Failed to load users');
+                }
+                
+                const data = await res.json();
+                const usersList = document.getElementById('usersList');
+                
+                if (data.users && data.users.length > 0) {
+                    usersList.innerHTML = data.users.map(user => `
+                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                            <div>
+                                <div class="font-medium text-gray-900">${user.fullName || 'No Name'}</div>
+                                <div class="text-sm text-gray-600">${user.email}</div>
+                            </div>
+                            <div class="text-right">
+                                <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full ${getRoleColor(user.role)}">
+                                    ${user.role}
+                                </span>
+                                <div class="text-xs text-gray-500 mt-1">
+                                    ${new Date(user.created_at).toLocaleDateString()}
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    usersList.innerHTML = '<p class="text-gray-500 text-center py-4">No users found</p>';
+                }
+            } catch (err) {
+                console.error('Error loading users:', err);
+                document.getElementById('usersList').innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="fas fa-exclamation-triangle text-2xl text-red-400 mb-2"></i>
+                        <p class="text-red-500">Failed to load users: ${err.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Get role color class
+        function getRoleColor(role) {
+            switch (role) {
+                case 'Super Admin': return 'bg-purple-100 text-purple-800';
+                case 'Admin': return 'bg-red-100 text-red-800';
+                case 'Tester': return 'bg-blue-100 text-blue-800';
+                case 'Athlete': return 'bg-green-100 text-green-800';
+                default: return 'bg-gray-100 text-gray-800';
+            }
+        }
+
+        // Load users on page load
+        loadUsers();
+    </script>
+</body>
+</html> 
