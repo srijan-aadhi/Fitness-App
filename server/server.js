@@ -11,16 +11,28 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+// Configure CORS to allow your Bluehost domain
+const corsOptions = {
+  origin: [
+    'https://app.dsnc.in',
+    'http://localhost:3000',
+    'http://127.0.0.1:5500',
+    'http://localhost:5500'
+  ],
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
 app.use(bodyParser.json());
-// Removed static file serving - frontend hosted separately on Bluehost
 
 // Root route for API health check
 app.get('/', (req, res) => {
   res.json({ 
     message: 'Fitness App API Server', 
     status: 'running',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    jwtSecret: process.env.JWT_SECRET ? 'Set' : 'Missing'
   });
 });
 
