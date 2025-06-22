@@ -415,6 +415,8 @@ function validateStep3() {
 }
 
 // Form submission
+const API_BASE_URL = 'https://fitness-app-production-b5bb.up.railway.app';
+
 document.getElementById('dailyTrackingForm').addEventListener('submit', async (e) => {
   e.preventDefault();
 
@@ -455,7 +457,7 @@ document.getElementById('dailyTrackingForm').addEventListener('submit', async (e
   };
 
   try {
-    const res = await fetch('/api/daily-tracking', {
+    const res = await fetch(`${API_BASE_URL}/api/daily-tracking`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

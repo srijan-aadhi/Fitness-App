@@ -1,4 +1,6 @@
 // public/src/signup.js
+const API_BASE_URL = 'https://fitness-app-production-b5bb.up.railway.app';
+
 const signupForm = document.getElementById('signupForm');
 signupForm.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -13,7 +15,7 @@ signupForm.addEventListener('submit', async (e) => {
     password: document.getElementById('password').value
   };
 
-  const res = await fetch('/api/auth/signup', {
+  const res = await fetch(`${API_BASE_URL}/api/auth/signup`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(user)

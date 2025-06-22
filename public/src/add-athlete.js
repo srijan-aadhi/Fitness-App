@@ -1,3 +1,5 @@
+const API_BASE_URL = 'https://fitness-app-production-b5bb.up.railway.app';
+
 document.getElementById('addAthleteForm').addEventListener('submit', async (e) => {
   e.preventDefault();
 
@@ -35,7 +37,7 @@ document.getElementById('addAthleteForm').addEventListener('submit', async (e) =
   };
 
   try {
-    const res = await fetch('/api/athletes', {
+    const res = await fetch(`${API_BASE_URL}/api/athletes`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -94,7 +96,7 @@ async function loadAthletes() {
   select.appendChild(placeholder);
 
   try {
-    const res = await fetch('/api/athletes', {
+    const res = await fetch(`${API_BASE_URL}/api/athletes`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     if (!res.ok) throw new Error('Failed to fetch athletes');

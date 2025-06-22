@@ -1,4 +1,5 @@
 // Speed Form JavaScript
+const API_BASE_URL = 'https://fitness-app-production-b5bb.up.railway.app';
 let formSubmitted = false;
 
 // Validation functions
@@ -228,7 +229,7 @@ async function handleFormSubmission(e) {
   };
 
   try {
-    const res = await fetch('/api/speed-assessment', {
+    const res = await fetch(`${API_BASE_URL}/api/speed-assessment`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

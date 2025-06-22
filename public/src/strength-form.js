@@ -1,4 +1,5 @@
 // Strength Form JavaScript
+const API_BASE_URL = 'https://fitness-app-production-b5bb.up.railway.app';
 let formSubmitted = false;
 
 // Validation functions
@@ -122,7 +123,7 @@ async function loadAthletes() {
   if (!token) return;
 
   try {
-    const res = await fetch('/api/athletes', {
+    const res = await fetch(`${API_BASE_URL}/api/athletes`, {
       headers: {
         'Authorization': `Bearer ${token}`
       }
@@ -204,7 +205,7 @@ async function handleFormSubmission(e) {
   };
 
   try {
-    const res = await fetch('/api/strength-assessment', {
+    const res = await fetch(`${API_BASE_URL}/api/strength-assessment`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

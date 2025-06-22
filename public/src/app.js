@@ -78,10 +78,13 @@ function canCreateAthletes() {
   return (roleHierarchy[userRole] || 1) >= 2; // Tester level or higher
 }
 
+// Configuration for API endpoints
+const API_BASE_URL = 'https://fitness-app-production-b5bb.up.railway.app';
+
 // Fetch user profile to get role information
 async function fetchUserProfile() {
   try {
-    const res = await fetch('/api/auth/profile', {
+    const res = await fetch(`${API_BASE_URL}/api/auth/profile`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     
@@ -121,7 +124,7 @@ function updateUIForRole() {
 
 // Load athletes dynamically
 async function loadAthletes() {
-  const res = await fetch('/api/athletes', {
+  const res = await fetch(`${API_BASE_URL}/api/athletes`, {
     headers: { Authorization: `Bearer ${token}` }
   });
   const data = await res.json();
@@ -220,7 +223,7 @@ document.getElementById('entryForm').addEventListener('submit', async e => {
   };
 
   try {
-    const res = await fetch('/api/injury-report', {
+    const res = await fetch(`${API_BASE_URL}/api/injury-report`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
