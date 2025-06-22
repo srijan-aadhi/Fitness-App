@@ -309,7 +309,7 @@ async function loadDashboard() {
     });
 
     // Fetch dashboard data with filters
-    const res = await fetch(`/api/dashboard-analytics?${params.toString()}`, {
+    const res = await fetch(`${API_BASE_URL}/api/dashboard-analytics?${params.toString()}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     
