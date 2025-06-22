@@ -21,15 +21,33 @@ function validateSleepLength(value) {
   return !isNaN(num) && num > 0 && num <= 24; // Reasonable sleep hours range
 }
 
+function validateTrainingMinutes(value) {
+  if (!value || value.trim() === '') return false;
+  
+  // Check if it's a range format (e.g., "100-110")
+  const rangePattern = /^\d+\s*-\s*\d+$/;
+  if (rangePattern.test(value.trim())) {
+    const [min, max] = value.trim().split('-').map(n => parseInt(n.trim()));
+    return min > 0 && max > min && max <= 600; // Reasonable range limits
+  }
+  
+  // If not a range, check if it's a single number
+  const num = parseFloat(value);
+  return !isNaN(num) && num > 0 && num <= 600;
+}
+
 // Show/hide custom input fields when "Other" is selected
 function setupOtherInputHandlers() {
   const fieldsWithOther = [
+    { name: 'trainingMinutes', validator: validateTrainingMinutes, placeholder: 'Enter range (e.g., 100-110)', errorMsg: 'Please enter a valid range format (e.g., 100-110) with no letters' },
     { name: 'waterIntake', validator: validateWaterIntake, placeholder: 'Enter liters (e.g., 2.5)', errorMsg: 'Please enter a valid number between 0.1 and 10 liters' },
     { name: 'breakfastTime', validator: validateTimeInput, placeholder: 'Enter time (e.g., 08:30)', errorMsg: 'Please enter a valid time format (HH:MM)' },
     { name: 'lunchTime', validator: validateTimeInput, placeholder: 'Enter time (e.g., 12:30)', errorMsg: 'Please enter a valid time format (HH:MM)' },
     { name: 'snackTime', validator: validateTimeInput, placeholder: 'Enter time (e.g., 15:30)', errorMsg: 'Please enter a valid time format (HH:MM)' },
     { name: 'dinnerTime', validator: validateTimeInput, placeholder: 'Enter time (e.g., 19:00)', errorMsg: 'Please enter a valid time format (HH:MM)' },
-    { name: 'sleepLength', validator: validateSleepLength, placeholder: 'Enter hours (e.g., 7.5)', errorMsg: 'Please enter a valid number between 0.1 and 24 hours' }
+    { name: 'sleepLength', validator: validateSleepLength, placeholder: 'Enter hours (e.g., 7.5)', errorMsg: 'Please enter a valid number between 0.1 and 24 hours' },
+    { name: 'sleepQuality', validator: (value) => value.trim().length >= 2, placeholder: 'Enter sleep quality description', errorMsg: 'Please enter a description of at least 2 characters' },
+    { name: 'tiredness', validator: (value) => value.trim().length >= 2, placeholder: 'Enter tiredness description', errorMsg: 'Please enter a description of at least 2 characters' }
   ];
 
   fieldsWithOther.forEach(field => {
@@ -102,6 +120,11 @@ function validateCustomInput(fieldName, validator, errorMsg) {
 function getFieldValue(fieldName) {
   const checkedRadio = document.querySelector(`input[name="${fieldName}"]:checked`);
   if (checkedRadio && checkedRadio.value === 'Other') {
+    // Special case for training minutes which uses a different ID
+    if (fieldName === 'trainingMinutes') {
+      const customInput = document.getElementById('customTrainingMinutes');
+      return customInput ? customInput.value.trim() : null;
+    }
     return document.getElementById(`${fieldName}Custom`).value.trim();
   }
   return checkedRadio ? checkedRadio.value : null;
@@ -202,6 +225,68 @@ function showStep(step) {
 }
 
 function validateStep1() {
+  // Step 1: Only validate membership ID and training minutes
+  const requiredFields = ['membershipId', 'trainingMinutes'];
+  const missingFields = [];
+  const invalidFields = [];
+  
+  requiredFields.forEach(field => {
+    if (field === 'membershipId') {
+      if (!document.getElementById(field).value.trim()) {
+        missingFields.push('Membership ID');
+      }
+    } else {
+      const checkedRadio = document.querySelector(`input[name="${field}"]:checked`);
+      if (!checkedRadio) {
+        missingFields.push(field.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()));
+      } else if (checkedRadio.value === 'Other') {
+        // Special case for training minutes which uses different IDs
+        if (field === 'trainingMinutes') {
+          if (!validateCustomTrainingMinutes()) {
+            invalidFields.push('Training Minutes: Please enter a valid range format (e.g., 100-110)');
+          }
+        } else {
+          // Validate custom input for other fields
+          const customInput = document.getElementById(`${field}Custom`);
+          if (!customInput.value.trim()) {
+            missingFields.push(`${field.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())} (Other)`);
+          } else {
+            // Validate based on field type
+            let isValid = false;
+            let errorMsg = '';
+            
+            switch (field) {
+              default:
+                isValid = true; // No specific validation for step 1 other fields
+                break;
+            }
+            
+            if (!isValid) {
+              invalidFields.push(`${field.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}: ${errorMsg}`);
+              document.getElementById(`${field}CustomError`).textContent = errorMsg;
+              document.getElementById(`${field}CustomError`).classList.remove('hidden');
+            }
+          }
+        }
+      }
+    }
+  });
+  
+  if (missingFields.length > 0) {
+    alert('Please fill in all required fields: ' + missingFields.join(', '));
+    return false;
+  }
+  
+  if (invalidFields.length > 0) {
+    alert('Please fix the following validation errors:\n' + invalidFields.join('\n'));
+    return false;
+  }
+  
+  return true;
+}
+
+function validateStep2() {
+  // Step 2: Validate nutrition and meal fields
   const requiredFields = ['previousDay', 'appetite', 'waterIntake', 'breakfastTime', 'lunchTime', 'snackTime', 'dinnerTime'];
   const missingFields = [];
   const invalidFields = [];
@@ -226,6 +311,10 @@ function validateStep1() {
           let errorMsg = '';
           
           switch (field) {
+            case 'trainingMinutes':
+              isValid = validateTrainingMinutes(customInput.value.trim());
+              errorMsg = 'Please enter a valid number between 1 and 600 minutes';
+              break;
             case 'waterIntake':
               isValid = validateWaterIntake(customInput.value.trim());
               errorMsg = 'Please enter a valid number between 0.1 and 10 liters';
@@ -262,7 +351,8 @@ function validateStep1() {
   return true;
 }
 
-function validateStep2() {
+function validateStep3() {
+  // Step 3: Validate sleep and wellness fields
   const requiredFields = ['sleepLength', 'sleepQuality', 'tiredness'];
   const missingFields = [];
   const invalidFields = [];
@@ -272,15 +362,35 @@ function validateStep2() {
     if (!checkedRadio) {
       missingFields.push(field.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()));
     } else if (checkedRadio.value === 'Other') {
-      // Validate custom input for sleep length
-      if (field === 'sleepLength') {
-        const customInput = document.getElementById(`${field}Custom`);
-        if (!customInput.value.trim()) {
-          missingFields.push(`${field.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())} (Other)`);
-        } else if (!validateSleepLength(customInput.value.trim())) {
-          invalidFields.push(`${field.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}: Please enter a valid number between 0.1 and 24 hours`);
-          document.getElementById(`${field}CustomError`).textContent = 'Please enter a valid number between 0.1 and 24 hours';
-          document.getElementById(`${field}CustomError`).classList.remove('hidden');
+      // Check for custom input container
+      const customInput = document.getElementById(`${field}Custom`);
+      if (!customInput) {
+        console.warn(`Custom input for ${field} not found`);
+        return;
+      }
+      
+      if (!customInput.value.trim()) {
+        missingFields.push(`${field.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())} (Other)`);
+      } else {
+        // Validate based on field type
+        let isValid = true;
+        let errorMsg = '';
+        
+        if (field === 'sleepLength') {
+          isValid = validateSleepLength(customInput.value.trim());
+          errorMsg = 'Please enter a valid number between 0.1 and 24 hours';
+        } else if (field === 'sleepQuality' || field === 'tiredness') {
+          isValid = customInput.value.trim().length >= 2;
+          errorMsg = 'Please enter a description of at least 2 characters';
+        }
+        
+        if (!isValid) {
+          invalidFields.push(`${field.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}: ${errorMsg}`);
+          const errorDiv = document.getElementById(`${field}CustomError`);
+          if (errorDiv) {
+            errorDiv.textContent = errorMsg;
+            errorDiv.classList.remove('hidden');
+          }
         }
       }
     }
@@ -315,8 +425,8 @@ document.getElementById('dailyTrackingForm').addEventListener('submit', async (e
     return;
   }
 
-  // Validate Step 2
-  if (!validateStep2()) {
+  // Validate Step 3
+  if (!validateStep3()) {
     return;
   }
 
@@ -327,6 +437,8 @@ document.getElementById('dailyTrackingForm').addEventListener('submit', async (e
   // Collect form data from both steps using the new getFieldValue function
   const formData = {
     // Step 1 data
+    membershipId: document.getElementById('membershipId').value.trim(),
+    trainingMinutes: getFieldValue('trainingMinutes'),
     previousDay: document.getElementById('previousDay').value,
     appetite: getFieldValue('appetite'),
     waterIntake: getFieldValue('waterIntake'),
@@ -411,18 +523,88 @@ document.getElementById('dailyTrackingForm').addEventListener('submit', async (e
 });
 
 // Step navigation event listeners
-document.getElementById('nextStep').addEventListener('click', () => {
+document.getElementById('nextStep1').addEventListener('click', () => {
   if (validateStep1()) {
     showStep(2);
   }
 });
 
-document.getElementById('prevStep').addEventListener('click', () => {
+document.getElementById('prevStep2').addEventListener('click', () => {
   showStep(1);
+});
+
+document.getElementById('nextStep2').addEventListener('click', () => {
+  if (validateStep2()) {
+    showStep(3);
+  }
+});
+
+document.getElementById('prevStep3').addEventListener('click', () => {
+  showStep(2);
 });
 
 // Clear signature button
 document.getElementById('clearSignature').addEventListener('click', clearSignature);
+
+// Setup training minutes "Other" option handler
+function setupTrainingMinutesHandler() {
+  const trainingRadios = document.querySelectorAll('input[name="trainingMinutes"]');
+  const otherInput = document.getElementById('otherTrainingInput');
+  const customInput = document.getElementById('customTrainingMinutes');
+  const errorDiv = document.getElementById('customTrainingError');
+  
+  if (!otherInput || !customInput || !errorDiv) {
+    console.log('Training minutes elements not found, skipping setup');
+    return;
+  }
+  
+  trainingRadios.forEach(radio => {
+    radio.addEventListener('change', function() {
+      if (this.value === 'Other' && this.checked) {
+        otherInput.classList.remove('hidden');
+        customInput.focus();
+      } else {
+        otherInput.classList.add('hidden');
+        errorDiv.classList.add('hidden');
+        customInput.value = '';
+      }
+    });
+  });
+  
+  // Add validation for custom input
+  customInput.addEventListener('blur', function() {
+    validateCustomTrainingMinutes();
+  });
+  
+  customInput.addEventListener('input', function() {
+    errorDiv.classList.add('hidden');
+  });
+}
+
+// Validate custom training minutes input
+function validateCustomTrainingMinutes() {
+  const customInput = document.getElementById('customTrainingMinutes');
+  const errorDiv = document.getElementById('customTrainingError');
+  
+  if (!customInput || !errorDiv) return true;
+  
+  const value = customInput.value.trim();
+  
+  if (value === '') {
+    errorDiv.textContent = 'Please enter a training minutes range';
+    errorDiv.classList.remove('hidden');
+    return false;
+  }
+  
+  if (!validateTrainingMinutes(value)) {
+    errorDiv.textContent = 'Please enter a valid range format (e.g., 100-110) with no letters';
+    errorDiv.classList.remove('hidden');
+    return false;
+  }
+  
+  errorDiv.classList.add('hidden');
+  return true;
+}
 
 // Check user role on page load and add role indicator
 function checkUserRole() {
@@ -447,6 +629,9 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Setup "Other" input handlers
   setupOtherInputHandlers();
+  
+  // Setup training minutes handler
+  setupTrainingMinutesHandler();
   
   // Check user role
   checkUserRole();

@@ -394,6 +394,311 @@ app.get('/api/dashboard', enhancedAuthMiddleware, (req, res) => {
   );
 });
 
+// Dashboard Analytics - comprehensive analytics with filtering
+app.get('/api/dashboard-analytics', enhancedAuthMiddleware, (req, res) => {
+  const { membershipId, monthWise } = req.query;
+  const selectedMonths = req.query.months; // This will be an array or single value
+  
+  // Build query filters based on role and parameters
+  let whereClause = '';
+  let queryParams = [];
+  
+  if (req.user.role === 'Athlete') {
+    // Athletes can only see their own data
+    whereClause = 'WHERE dt.user_id = ?';
+    queryParams.push(req.user.id);
+  } else if (membershipId) {
+    // Trainers can filter by the actual membership ID field from daily tracking
+    whereClause = 'WHERE dt.membershipId = ?';
+    queryParams.push(membershipId);
+  }
+  
+  // Add month filters if specified
+  if (selectedMonths && selectedMonths.length > 0) {
+    const monthsArray = Array.isArray(selectedMonths) ? selectedMonths : [selectedMonths];
+    
+    if (monthsArray.length > 0) {
+      const timeClause = whereClause ? ' AND ' : ' WHERE ';
+      const monthPlaceholders = monthsArray.map(() => '?').join(', ');
+      whereClause += `${timeClause}strftime('%Y-%m', dt.previous_day) IN (${monthPlaceholders})`;
+      
+      // Convert each month format (e.g., "Sep-24", "Jun-25") to SQL format (e.g., "2024-09", "2025-06")
+      monthsArray.forEach(monthFilter => {
+        const [month, year] = monthFilter.split('-');
+        const monthNum = {
+          'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04',
+          'May': '05', 'Jun': '06', 'Jul': '07', 'Aug': '08',
+          'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'
+        }[month] || '01';
+        
+        // Handle both 2-digit years (24, 25) and 4-digit years
+        const fullYear = year.length === 2 ? `20${year}` : year;
+        queryParams.push(`${fullYear}-${monthNum}`);
+      });
+    }
+  }
+
+  // Query for comprehensive analytics
+  const analyticsQuery = `
+    SELECT 
+      dt.*,
+      u.fullName as userName,
+      strftime('%Y-%m', dt.previous_day) as month_year,
+      strftime('%Y-%m-%d', dt.previous_day) as day_date
+    FROM daily_tracking dt
+    LEFT JOIN users u ON dt.user_id = u.id
+    ${whereClause}
+    ORDER BY dt.previous_day DESC
+  `;
+
+  db.all(analyticsQuery, queryParams, (err, rows) => {
+    if (err) {
+      console.error('Analytics query error:', err);
+      return res.status(500).json({ error: err.message });
+    }
+
+    // Process data for analytics
+    const analytics = processAnalyticsData(rows, monthWise);
+    res.json(analytics);
+  });
+});
+
+// Process analytics data
+function processAnalyticsData(data, monthWise = false) {
+  if (!data || data.length === 0) {
+    return {
+      daysTrained: 0,
+      maxDays: 365,
+      waterIntake: 0,
+      monthlyTraining: { labels: [], datasets: [] },
+      hungerLevel: { months: [], categories: [] },
+      sleepHours: { months: [], data: [] },
+      sleepQuality: { months: [], categories: [], data: [] }
+    };
+  }
+
+  // Calculate days trained (entries with training minutes > 0)
+  const daysTrained = data.filter(row => {
+    const trainingMinutes = parseTrainingMinutes(row.training_minutes);
+    return trainingMinutes > 0;
+  }).length;
+
+  // Calculate average water intake from actual data
+  const validWaterIntakes = data
+    .map(row => {
+      const intake = parseFloat(row.water_intake);
+      // Handle "Other" custom inputs
+      if (isNaN(intake) && typeof row.water_intake === 'string') {
+        const numMatch = row.water_intake.match(/[\d.]+/);
+        return numMatch ? parseFloat(numMatch[0]) : 0;
+      }
+      return isNaN(intake) ? 0 : intake;
+    })
+    .filter(intake => intake > 0);
+  
+  const avgWaterIntake = validWaterIntakes.length > 0 
+    ? (validWaterIntakes.reduce((sum, intake) => sum + intake, 0) / validWaterIntakes.length)
+    : 0;
+
+  // Group data by month for charts
+  const monthlyData = {};
+  data.forEach(row => {
+    const month = formatMonthYear(row.month_year);
+    if (!monthlyData[month]) {
+      monthlyData[month] = [];
+    }
+    monthlyData[month].push(row);
+  });
+
+  const sortedMonths = Object.keys(monthlyData).sort();
+
+  // Process training minutes by ranges for monthly training chart
+  const trainingRanges = ['70-80', '80-90', '90-100', '100-110', '110-120', '120-130', '130-140', '140-150', '180'];
+  const monthlyTraining = {
+    labels: sortedMonths,
+    datasets: trainingRanges.map(range => ({
+      label: range,
+      data: sortedMonths.map(month => {
+        return monthlyData[month].filter(row => {
+          const trainingMinutes = parseTrainingMinutes(row.training_minutes);
+          return isInRange(trainingMinutes, range);
+        }).length;
+      }),
+      backgroundColor: getColorForRange(range)
+    }))
+  };
+
+  // Process hunger levels from appetite field
+  const hungerCategories = ['Did not eat', 'Eat Because', 'Poor', 'Normal', 'High', 'Very High'];
+  const hungerLevel = {
+    months: sortedMonths,
+    categories: hungerCategories,
+    data: sortedMonths.map(month => {
+      const monthData = monthlyData[month];
+      return hungerCategories.map(category => {
+        return monthData.filter(row => {
+          const appetite = normalizeAppetite(row.appetite);
+          return appetite === category;
+        }).length;
+      });
+    })
+  };
+
+  // Process sleep hours data from actual entries
+  const sleepHours = {
+    months: sortedMonths,
+    data: sortedMonths.map((month, monthIndex) => {
+      const monthData = monthlyData[month];
+      return monthData.map((row, dayIndex) => {
+        const sleepValue = parseSleepLength(row.sleep_length);
+        return {
+          x: monthIndex + (dayIndex / monthData.length), // Spread days across month
+          y: sleepValue * 10, // Scale for visualization
+          month: month,
+          value: sleepValue,
+          date: row.previous_day
+        };
+      }).filter(point => point.y > 0);
+    }).flat()
+  };
+
+  // Process sleep quality data from actual entries
+  const sleepQualityCategories = ['Very Deep', 'Normal', 'Restless', 'Bad with Breaks', 'Not at all'];
+  const sleepQuality = {
+    months: sortedMonths,
+    categories: sleepQualityCategories,
+    data: sortedMonths.map((month, monthIndex) => {
+      const monthData = monthlyData[month];
+      return sleepQualityCategories.map(category => {
+        const count = monthData.filter(row => {
+          const quality = normalizeSleepQuality(row.sleep_quality);
+          return quality === category;
+        }).length;
+        return {
+          month: month,
+          category: category,
+          count: count
+        };
+      });
+    }).flat()
+  };
+
+  return {
+    daysTrained,
+    maxDays: Math.max(365, daysTrained + 50), // Dynamic max based on data
+    waterIntake: Math.round(avgWaterIntake * 100) / 100, // Round to 2 decimals
+    monthlyTraining,
+    hungerLevel,
+    sleepHours,
+    sleepQuality
+  };
+}
+
+// Helper function to normalize appetite values to hunger categories
+function normalizeAppetite(appetite) {
+  if (!appetite) return 'Normal';
+  
+  const appetiteStr = appetite.toString().toLowerCase();
+  
+  // Map appetite values to hunger level categories
+  if (appetiteStr.includes('did not eat') || appetiteStr.includes('skipping')) return 'Did not eat';
+  if (appetiteStr.includes('eat because')) return 'Eat Because';
+  if (appetiteStr.includes('poor')) return 'Poor';
+  if (appetiteStr.includes('very high')) return 'Very High';
+  if (appetiteStr.includes('high')) return 'High';
+  if (appetiteStr.includes('normal')) return 'Normal';
+  
+  // Default mapping for custom inputs
+  return 'Normal';
+}
+
+// Helper function to parse sleep length
+function parseSleepLength(sleepLength) {
+  if (!sleepLength) return 0;
+  
+  // Handle numeric values
+  const num = parseFloat(sleepLength);
+  if (!isNaN(num)) return num;
+  
+  // Handle "X Hours" format
+  const hourMatch = sleepLength.toString().match(/(\d+(?:\.\d+)?)\s*hours?/i);
+  if (hourMatch) return parseFloat(hourMatch[1]);
+  
+  // Handle custom "Other" inputs
+  const numMatch = sleepLength.toString().match(/(\d+(?:\.\d+)?)/);
+  if (numMatch) return parseFloat(numMatch[1]);
+  
+  return 0;
+}
+
+// Helper function to normalize sleep quality values
+function normalizeSleepQuality(sleepQuality) {
+  if (!sleepQuality) return 'Normal';
+  
+  const qualityStr = sleepQuality.toString().toLowerCase();
+  
+  if (qualityStr.includes('very deep')) return 'Very Deep';
+  if (qualityStr.includes('restless')) return 'Restless';
+  if (qualityStr.includes('bad with breaks') || qualityStr.includes('bad')) return 'Bad with Breaks';
+  if (qualityStr.includes('not at all')) return 'Not at all';
+  if (qualityStr.includes('normal')) return 'Normal';
+  
+  // Default for custom inputs
+  return 'Normal';
+}
+
+// Helper functions for data processing
+function parseTrainingMinutes(trainingMinutes) {
+  if (!trainingMinutes) return 0;
+  
+  // Handle range format (e.g., "100-110")
+  if (typeof trainingMinutes === 'string' && trainingMinutes.includes('-')) {
+    const [min, max] = trainingMinutes.split('-').map(n => parseInt(n));
+    return isNaN(min) || isNaN(max) ? 0 : (min + max) / 2;
+  }
+  
+  // Handle single number
+  const num = parseInt(trainingMinutes);
+  return isNaN(num) ? 0 : num;
+}
+
+function isInRange(value, range) {
+  if (range === '180') return value >= 180;
+  
+  const [min, max] = range.split('-').map(n => parseInt(n));
+  return value >= min && value <= max;
+}
+
+function getColorForRange(range) {
+  // Use a gradient from light to dark based on training intensity
+  const colors = {
+    '70-80': '#FEF3C7',    // Light yellow - light training
+    '80-90': '#FDE047',    // Yellow - moderate training
+    '90-100': '#22C55E',   // Green - good training
+    '100-110': '#3B82F6',  // Blue - solid training
+    '110-120': '#8B5CF6',  // Purple - intense training
+    '120-130': '#EF4444',  // Red - very intense training
+    '130-140': '#DC2626',  // Dark red - extreme training
+    '140-150': '#991B1B',  // Very dark red - maximum training
+    '180': '#7F1D1D'       // Darkest red - elite training
+  };
+  return colors[range] || '#6B7280';
+}
+
+function formatMonthYear(monthYear) {
+  if (!monthYear) return '';
+  
+  const [year, month] = monthYear.split('-');
+  const monthNames = {
+    '01': 'Jan', '02': 'Feb', '03': 'Mar', '04': 'Apr',
+    '05': 'May', '06': 'Jun', '07': 'Jul', '08': 'Aug',
+    '09': 'Sep', '10': 'Oct', '11': 'Nov', '12': 'Dec'
+  };
+  
+  const shortYear = year ? year.slice(-2) : '24';
+  return `${monthNames[month] || 'Jan'}-${shortYear}`;
+}
+
 // GET athletes - role-based access
 app.get('/api/athletes', enhancedAuthMiddleware, (req, res) => {
   // Athletes can only see themselves, others can see all
@@ -433,6 +738,7 @@ app.post('/api/athletes', enhancedAuthMiddleware, requireRole('Tester'), (req, r
 // Submit Daily Tracking - allows all authenticated users
 app.post('/api/daily-tracking', enhancedAuthMiddleware, (req, res) => {
   const { 
+    membershipId,
     previousDay, 
     appetite, 
     waterIntake, 
@@ -443,14 +749,15 @@ app.post('/api/daily-tracking', enhancedAuthMiddleware, (req, res) => {
     sleepLength,
     sleepQuality,
     tiredness,
-    signature
+    signature,
+    trainingMinutes
   } = req.body;
   
   // Validate required fields
   const requiredFields = {
-    previousDay, appetite, waterIntake, breakfastTime, 
+    membershipId, previousDay, appetite, waterIntake, breakfastTime, 
     lunchTime, snackTime, dinnerTime, sleepLength, 
-    sleepQuality, tiredness, signature
+    sleepQuality, tiredness, signature, trainingMinutes
   };
   
   const missingFields = Object.keys(requiredFields).filter(key => !requiredFields[key]);
@@ -463,11 +770,11 @@ app.post('/api/daily-tracking', enhancedAuthMiddleware, (req, res) => {
 
   db.run(
     `INSERT INTO daily_tracking 
-     (user_id, previous_day, appetite, water_intake, breakfast_time, lunch_time, snack_time, dinner_time, 
-      sleep_length, sleep_quality, tiredness, signature) 
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [req.user.id, previousDay, appetite, waterIntake, breakfastTime, lunchTime, snackTime, dinnerTime,
-     sleepLength, sleepQuality, tiredness, signature],
+     (user_id, membershipId, previous_day, appetite, water_intake, breakfast_time, lunch_time, snack_time, dinner_time, 
+      sleep_length, sleep_quality, tiredness, signature, training_minutes) 
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [req.user.id, membershipId, previousDay, appetite, waterIntake, breakfastTime, lunchTime, snackTime, dinnerTime,
+     sleepLength, sleepQuality, tiredness, signature, trainingMinutes],
     function (err) {
       if (err) {
         console.error('Daily tracking error:', err);

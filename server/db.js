@@ -115,6 +115,7 @@ db.serialize(() => {
     sleep_quality TEXT,
     tiredness TEXT,
     signature TEXT,
+    training_minutes TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(user_id) REFERENCES users(id)
   )`);
@@ -141,6 +142,19 @@ db.serialize(() => {
   db.run(`ALTER TABLE daily_tracking ADD COLUMN signature TEXT`, (err) => {
     if (err && !err.message.includes('duplicate column name')) {
       console.error('Error adding signature column:', err.message);
+    }
+  });
+
+  db.run(`ALTER TABLE daily_tracking ADD COLUMN training_minutes TEXT`, (err) => {
+    if (err && !err.message.includes('duplicate column name')) {
+      console.error('Error adding training_minutes column:', err.message);
+    }
+  });
+
+  // Add membershipId column to store user-inputted membership ID values
+  db.run(`ALTER TABLE daily_tracking ADD COLUMN membershipId TEXT`, (err) => {
+    if (err && !err.message.includes('duplicate column name')) {
+      console.error('Error adding membershipId column:', err.message);
     }
   });
 

@@ -203,10 +203,14 @@
     <div class="step-indicator max-w-4xl mx-auto">
       <div class="step active" id="step1Indicator">
         <div class="step-circle">1</div>
-        <div class="text-sm font-medium text-gray-700">Nutrition & Meals</div>
+        <div class="text-sm font-medium text-gray-700">Member Info</div>
       </div>
       <div class="step" id="step2Indicator">
         <div class="step-circle">2</div>
+        <div class="text-sm font-medium text-gray-700">Nutrition & Meals</div>
+      </div>
+      <div class="step" id="step3Indicator">
+        <div class="step-circle">3</div>
         <div class="text-sm font-medium text-gray-700">Sleep & Wellness</div>
       </div>
     </div>
@@ -215,21 +219,109 @@
       <div class="card rounded-2xl p-8 shadow-lg">
         <form id="dailyTrackingForm" class="space-y-8">
           
-          <!-- Step 1: Nutrition & Meals -->
+          <!-- Step 1: Member Information -->
           <div id="step1" class="form-step">
+            <h3 class="text-2xl font-bold text-gray-800 mb-8 text-center">
+              <i class="fas fa-user-circle mr-3 text-blue-600"></i>Member Information & Training
+            </h3>
+
+            <!-- Membership ID -->
+            <div class="mb-8">
+              <label for="membershipId" class="block font-semibold text-gray-700 mb-4">
+                <i class="fas fa-id-card mr-2"></i>Membership ID *
+              </label>
+              <input type="text" id="membershipId" required 
+                     class="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" 
+                     placeholder="Enter your membership ID" />
+              <p class="text-sm text-gray-500 mt-2">Enter a value for this field</p>
+            </div>
+
+            <!-- Training Minutes -->
+            <div class="mb-8">
+              <label class="block font-semibold text-gray-700 mb-4">
+                <i class="fas fa-clock mr-2"></i>How many minutes did you spend for training today? *
+              </label>
+              <div class="radio-group">
+                <div class="radio-option">
+                  <input type="radio" id="training_60_70" name="trainingMinutes" value="60 - 70" required>
+                  <label for="training_60_70">60 - 70</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="training_70_80" name="trainingMinutes" value="70 - 80">
+                  <label for="training_70_80">70 - 80</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="training_80_90" name="trainingMinutes" value="80 - 90">
+                  <label for="training_80_90">80 - 90</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="training_90_100" name="trainingMinutes" value="90 - 100">
+                  <label for="training_90_100">90 - 100</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="training_100_110" name="trainingMinutes" value="100 - 110">
+                  <label for="training_100_110">100 - 110</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="training_110_120" name="trainingMinutes" value="110 - 120">
+                  <label for="training_110_120">110 - 120</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="training_120_130" name="trainingMinutes" value="120 - 130">
+                  <label for="training_120_130">120 - 130</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="training_130_140" name="trainingMinutes" value="130 - 140">
+                  <label for="training_130_140">130 - 140</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="training_140_150" name="trainingMinutes" value="140 - 150">
+                  <label for="training_140_150">140 - 150</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="training_other" name="trainingMinutes" value="Other">
+                  <label for="training_other">Other</label>
+                </div>
+              </div>
+              
+              <!-- Other Training Minutes Input -->
+              <div id="otherTrainingInput" class="mt-4 hidden">
+                <label for="customTrainingMinutes" class="block font-semibold text-gray-700 mb-2">
+                  <i class="fas fa-edit mr-2"></i>Enter training minutes range (e.g., 100-110)
+                </label>
+                <input type="text" id="customTrainingMinutes" placeholder="e.g., 100-110" 
+                       class="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+                                <div id="customTrainingError" class="text-red-500 text-sm mt-2 hidden"></div>
+               </div>
+             </div>
+            
+            <!-- Step 1 Navigation -->
+            <div class="flex justify-end mt-8">
+              <button type="button" id="nextStep1" class="btn-primary px-8 py-4 text-white rounded-xl font-semibold text-lg">
+                <i class="fas fa-arrow-right mr-2"></i>Next: Nutrition & Meals
+              </button>
+            </div>
+          </div>
+
+          <!-- Step 2: Nutrition & Meals -->
+          <div id="step2" class="form-step hidden">
+            <h3 class="text-2xl font-bold text-gray-800 mb-8 text-center">
+              <i class="fas fa-utensils mr-3 text-green-600"></i>Nutrition & Daily Meals
+            </h3>
+
             <!-- Previous Day Date -->
-            <div>
-              <label for="previousDay" class="block font-semibold text-gray-700 mb-3">
+            <div class="mb-8">
+              <label for="previousDay" class="block font-semibold text-gray-700 mb-4">
                 <i class="fas fa-calendar mr-2"></i>Previous Day *
               </label>
               <input type="date" id="previousDay" required 
                      class="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
-              <p class="text-sm text-gray-500 mt-1">Format: dd-MMM-yyyy</p>
+              <p class="text-sm text-gray-500 mt-2">Format: dd-MMM-yyyy</p>
             </div>
 
             <!-- Appetite Level -->
-            <div>
-              <label class="block font-semibold text-gray-700 mb-3">
+            <div class="mb-8">
+              <label class="block font-semibold text-gray-700 mb-4">
                 <i class="fas fa-utensils mr-2"></i>Previous Day Appetite (Hunger Level) *
               </label>
               <div class="radio-group">
@@ -261,8 +353,8 @@
             </div>
 
             <!-- Water Intake -->
-            <div>
-              <label class="block font-semibold text-gray-700 mb-3">
+            <div class="mb-8">
+              <label class="block font-semibold text-gray-700 mb-4">
                 <i class="fas fa-tint mr-2"></i>Previous Day Amount of Water Intake (Litres)? *
               </label>
               <div class="radio-group">
@@ -306,8 +398,8 @@
             </div>
 
             <!-- Breakfast Time -->
-            <div>
-              <label class="block font-semibold text-gray-700 mb-3">
+            <div class="mb-8">
+              <label class="block font-semibold text-gray-700 mb-4">
                 <i class="fas fa-coffee mr-2"></i>Previous Day Breakfast Time *
               </label>
               <div class="radio-group">
@@ -343,8 +435,8 @@
             </div>
 
             <!-- Lunch Time -->
-            <div>
-              <label class="block font-semibold text-gray-700 mb-3">
+            <div class="mb-8">
+              <label class="block font-semibold text-gray-700 mb-4">
                 <i class="fas fa-hamburger mr-2"></i>Previous Day Lunch Time *
               </label>
               <div class="radio-group">
@@ -380,8 +472,8 @@
             </div>
 
             <!-- Snack Time -->
-            <div>
-              <label class="block font-semibold text-gray-700 mb-3">
+            <div class="mb-8">
+              <label class="block font-semibold text-gray-700 mb-4">
                 <i class="fas fa-cookie-bite mr-2"></i>Previous Day Snack Time *
               </label>
               <div class="radio-group">
@@ -417,8 +509,8 @@
             </div>
 
             <!-- Dinner Time -->
-            <div>
-              <label class="block font-semibold text-gray-700 mb-3">
+            <div class="mb-8">
+              <label class="block font-semibold text-gray-700 mb-4">
                 <i class="fas fa-pizza-slice mr-2"></i>Previous Day Dinner Time *
               </label>
               <div class="radio-group">
@@ -457,23 +549,26 @@
               </div>
             </div>
             
-            <!-- Step 1 Navigation -->
-            <div class="flex justify-end">
-              <button type="button" id="nextStep" class="btn-primary px-8 py-4 text-white rounded-xl font-semibold text-lg">
+            <!-- Step 2 Navigation -->
+            <div class="flex justify-between mt-8">
+              <button type="button" id="prevStep2" class="btn-secondary px-8 py-4 text-white rounded-xl font-semibold text-lg">
+                <i class="fas fa-arrow-left mr-2"></i>Previous: Member Info
+              </button>
+              <button type="button" id="nextStep2" class="btn-primary px-8 py-4 text-white rounded-xl font-semibold text-lg">
                 <i class="fas fa-arrow-right mr-2"></i>Next: Sleep & Wellness
               </button>
             </div>
           </div>
 
-          <!-- Step 2: Sleep & Psychological Traits -->
-          <div id="step2" class="form-step hidden">
-            <h3 class="text-2xl font-bold text-gray-800 mb-6 text-center">
-              <i class="fas fa-bed mr-3 text-purple-600"></i>DSNC Members Attendance & Psychological Traits
+          <!-- Step 3: Sleep & Psychological Traits -->
+          <div id="step3" class="form-step hidden">
+            <h3 class="text-2xl font-bold text-gray-800 mb-8 text-center">
+              <i class="fas fa-bed mr-3 text-purple-600"></i>Sleep & Wellness
             </h3>
 
             <!-- Sleep Length -->
-            <div>
-              <label class="block font-semibold text-gray-700 mb-3">
+            <div class="mb-8">
+              <label class="block font-semibold text-gray-700 mb-4">
                 <i class="fas fa-clock mr-2"></i>Previous Day's Length (Hours) of Sleep? *
               </label>
               <div class="radio-group">
@@ -533,8 +628,8 @@
             </div>
 
             <!-- Sleep Quality -->
-            <div>
-              <label class="block font-semibold text-gray-700 mb-3">
+            <div class="mb-8">
+              <label class="block font-semibold text-gray-700 mb-4">
                 <i class="fas fa-bed mr-2"></i>Previous Day's Quality of Sleep *
               </label>
               <div class="radio-group">
@@ -566,8 +661,8 @@
             </div>
 
             <!-- Tiredness Sensation -->
-            <div>
-              <label class="block font-semibold text-gray-700 mb-3">
+            <div class="mb-8">
+              <label class="block font-semibold text-gray-700 mb-4">
                 <i class="fas fa-user-clock mr-2"></i>Tiredness Sensation (When you get up, this morning how did you feel?) *
               </label>
               <div class="radio-group">
@@ -599,8 +694,8 @@
             </div>
 
             <!-- Signature -->
-            <div>
-              <label class="block font-semibold text-gray-700 mb-3">
+            <div class="mb-8">
+              <label class="block font-semibold text-gray-700 mb-4">
                 <i class="fas fa-signature mr-2"></i>Signature *
               </label>
               <div class="text-center">
@@ -614,10 +709,10 @@
               </div>
             </div>
 
-            <!-- Step 2 Navigation -->
-            <div class="flex justify-between">
-              <button type="button" id="prevStep" class="btn-secondary px-8 py-4 text-white rounded-xl font-semibold text-lg">
-                <i class="fas fa-arrow-left mr-2"></i>Back
+            <!-- Step 3 Navigation -->
+            <div class="flex justify-between mt-8">
+              <button type="button" id="prevStep3" class="btn-secondary px-8 py-4 text-white rounded-xl font-semibold text-lg">
+                <i class="fas fa-arrow-left mr-2"></i>Previous: Nutrition
               </button>
               <button type="submit" class="btn-primary px-8 py-4 text-white rounded-xl font-semibold text-lg">
                 <i class="fas fa-save mr-2"></i>Submit Daily Tracking
