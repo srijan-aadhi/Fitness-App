@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
@@ -12,7 +13,16 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(bodyParser.json());
-app.use(express.static('public'));
+// Removed static file serving - frontend hosted separately on Bluehost
+
+// Root route for API health check
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'Fitness App API Server', 
+    status: 'running',
+    timestamp: new Date().toISOString()
+  });
+});
 
 // Middleware to check user role
 const requireRole = (minRole) => {
