@@ -11,16 +11,20 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Configure CORS to allow your Bluehost domain
+// Configure CORS for global access
 const corsOptions = {
-  origin: [
-    'https://app.dsnc.in',
-    'http://localhost:3000',
-    'http://127.0.0.1:5500',
-    'http://localhost:5500'
-  ],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Allow all origins for maximum global accessibility
+    // You can add specific restrictions here if needed for security
+    return callback(null, true);
+  },
   credentials: true,
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 200,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 };
 
 app.use(cors(corsOptions));
@@ -1150,7 +1154,9 @@ app.get('/api/admin/stats', enhancedAuthMiddleware, requireRole('Admin'), (req, 
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
+// Listen on both IPv4 and IPv6 for global accessibility
+app.listen(PORT, '::', () => {
+  console.log(`Server running at http://localhost:${PORT} (IPv4 and IPv6)`);
   console.log('Available user roles:', Object.values(USER_ROLES).map(r => r.name).join(', '));
+  console.log('CORS configured for global access');
 });
