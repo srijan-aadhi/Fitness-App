@@ -1,9 +1,13 @@
 require('dotenv').config(); 
 const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcryptjs');
-const db = new sqlite3.Database(process.env.DB_PATH);
 
-console.log('Using DB path:', process.env.DB_PATH);
+// Use environment variable or fallback to default path
+const dbPath = process.env.DB_PATH || './database/db.sqlite';
+console.log('Using DB path:', dbPath);
+console.log('DB_PATH env var:', process.env.DB_PATH);
+
+const db = new sqlite3.Database(dbPath);
 
 // Define valid user roles with hierarchy (higher number = higher access)
 const USER_ROLES = {
