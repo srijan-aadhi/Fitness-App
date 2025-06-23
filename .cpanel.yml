@@ -1,7 +1,7 @@
 ---
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/$USER/public_html/
+    - export DEPLOYPATH=/home/$USER/public_html/app-dsnc-in/
     - /bin/cp -R public/* $DEPLOYPATH
     - /bin/cp -R public/.* $DEPLOYPATH 2>/dev/null || true
     - find $DEPLOYPATH -type f -name "*.html" -exec chmod 644 {} \;
