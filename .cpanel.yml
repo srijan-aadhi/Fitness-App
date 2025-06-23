@@ -3,4 +3,8 @@ deployment:
   tasks:
     - export DEPLOYPATH=/home/$USER/public_html/
     - /bin/cp -R public/* $DEPLOYPATH
-    - /bin/cp -R public/.* $DEPLOYPATH 2>/dev/null || true 
+    - /bin/cp -R public/.* $DEPLOYPATH 2>/dev/null || true
+    - find $DEPLOYPATH -type f -name "*.html" -exec chmod 644 {} \;
+    - find $DEPLOYPATH -type f -name "*.js" -exec chmod 644 {} \;
+    - find $DEPLOYPATH -type f -name "*.css" -exec chmod 644 {} \;
+    - find $DEPLOYPATH -type d -exec chmod 755 {} \; 
