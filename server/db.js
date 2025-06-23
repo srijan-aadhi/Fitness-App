@@ -279,28 +279,34 @@ db.serialize(() => {
 
 });
 
-// Helper function to generate unique membership ID
-function generateMembershipId() {
-  const prefix = 'DSNC';
-  const timestamp = Date.now().toString().slice(-6); // Last 6 digits of timestamp
-  const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-  return `${prefix}${timestamp}${random}`;
-}
-
-// Helper function to ensure unique membership ID
-function generateUniqueMembershipId(callback) {
-  const membershipId = generateMembershipId();
-  
-  db.get(`SELECT id FROM users WHERE membership_id = ?`, [membershipId], (err, row) => {
+// Helper function to generate the next sequential membership ID
+function generateNextMembershipId(callback) {
+  // Find the highest existing membership ID in D1xxx format
+  db.get(`SELECT membership_id FROM users 
+          WHERE membership_id LIKE 'D1%' 
+          ORDER BY CAST(SUBSTR(membership_id, 2) AS INTEGER) DESC 
+          LIMIT 1`, (err, row) => {
     if (err) {
       callback(err, null);
-    } else if (row) {
-      // ID already exists, generate a new one
-      generateUniqueMembershipId(callback);
-    } else {
-      callback(null, membershipId);
+      return;
     }
+    
+    let nextNumber = 1001; // Default starting number
+    
+    if (row && row.membership_id) {
+      // Extract the number part and increment
+      const currentNumber = parseInt(row.membership_id.substring(1));
+      nextNumber = currentNumber + 1;
+    }
+    
+    const newMembershipId = `D${nextNumber}`;
+    callback(null, newMembershipId);
   });
+}
+
+// Helper function to ensure unique membership ID (kept for backward compatibility)
+function generateUniqueMembershipId(callback) {
+  generateNextMembershipId(callback);
 }
 
 // Helper functions for role management
