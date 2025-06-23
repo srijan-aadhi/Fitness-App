@@ -106,7 +106,7 @@ function updateUIForRole() {
   // Add role indicator to the page
   const roleIndicator = document.createElement('div');
   roleIndicator.id = 'roleIndicator';
-  roleIndicator.className = 'fixed bottom-4 left-4 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold z-50 shadow-lg';
+  roleIndicator.className = 'fixed bottom-4 left-4 bg-gray-800 text-white px-3 py-1 rounded-full text-sm font-semibold z-50 shadow-lg';
   roleIndicator.textContent = `Role: ${userRole}`;
   
   // Remove existing role indicator if present
@@ -119,6 +119,76 @@ function updateUIForRole() {
   const injuryReportsBtn = document.getElementById('injuryReportsBtn');
   if (injuryReportsBtn && (userRole === 'Tester' || userRole === 'Admin' || userRole === 'Super Admin')) {
     injuryReportsBtn.style.display = 'block';
+  }
+  
+  // Hide assessment forms for Athletes
+  if (userRole === 'Athlete') {
+    // Hide navigation buttons for assessment forms
+    const assessmentButtons = [
+      document.querySelector('button[onclick="window.location.href=\'strength-form.html\'"]'),
+      document.querySelector('button[onclick="window.location.href=\'speed-form.html\'"]'),
+      document.querySelector('button[onclick="window.location.href=\'agility-form.html\'"]')
+    ];
+    
+    assessmentButtons.forEach(btn => {
+      if (btn) btn.style.display = 'none';
+    });
+    
+    // Hide hero section assessment buttons
+    const heroAssessmentButtons = [
+      document.querySelector('button[onclick="window.location.href=\'strength-form.html\'"]'),
+      document.querySelector('button[onclick="window.location.href=\'speed-form.html\'"]'),
+      document.querySelector('button[onclick="window.location.href=\'agility-form.html\'"]')
+    ];
+    
+    heroAssessmentButtons.forEach(btn => {
+      if (btn) btn.style.display = 'none';
+    });
+  }
+  
+  // Update membership filter based on role
+  updateMembershipFilter();
+}
+
+// Update membership filter based on user role
+async function updateMembershipFilter() {
+  const membershipFilter = document.getElementById('membershipFilter');
+  if (!membershipFilter) return;
+  
+  if (userRole === 'Athlete') {
+    // For athletes, show their own membership ID and make it read-only
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/auth/profile`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (res.ok) {
+        const userData = await res.json();
+        membershipFilter.value = userData.membership_id || '';
+        membershipFilter.readOnly = true;
+        membershipFilter.placeholder = 'Your Membership ID';
+        membershipFilter.className = 'bg-gray-600 border border-gray-500 text-gray-300 px-3 py-2 rounded-md focus:outline-none cursor-not-allowed w-48';
+        
+        // Update label text for athletes
+        const label = membershipFilter.previousElementSibling;
+        if (label && label.tagName === 'LABEL') {
+          label.innerHTML = '<i class="fas fa-id-card mr-2"></i>Your Membership ID';
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch user profile for membership ID:', err);
+    }
+  } else {
+    // For other roles, allow filtering by membership ID
+    membershipFilter.readOnly = false;
+    membershipFilter.placeholder = 'Enter Membership ID to filter';
+    membershipFilter.className = 'bg-gray-700 border border-gray-600 text-white px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-48';
+    
+    // Update label text for other roles
+    const label = membershipFilter.previousElementSibling;
+    if (label && label.tagName === 'LABEL') {
+      label.innerHTML = '<i class="fas fa-user-circle mr-2"></i>Filter by Membership ID';
+    }
   }
 }
 

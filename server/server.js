@@ -4,7 +4,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const { db, USER_ROLES, roleHelpers } = require('./db');
+const { db, USER_ROLES, roleHelpers, generateUniqueMembershipId } = require('./db');
 const authMiddleware = require('./auth');
 require('dotenv').config();
 
@@ -72,7 +72,7 @@ const enhancedAuthMiddleware = (req, res, next) => {
   });
 };
 
-// Register - now includes role handling
+// Register - now includes role handling and membership ID
 app.post('/api/auth/signup', async (req, res) => {
   const { fullName, dob, gender, sport, contact, email, password, role = 'Athlete' } = req.body;
   
@@ -81,16 +81,23 @@ app.post('/api/auth/signup', async (req, res) => {
     return res.status(400).json({ error: 'Invalid role specified' });
   }
   
-  const hashedPassword = await bcrypt.hash(password, 10);
-  db.run(
-    `INSERT INTO users (fullName, dob, gender, sport, contact, email, password, role) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    [fullName, dob, gender, sport, contact, email, hashedPassword, role],
-    function (err) {
-      if (err) return res.status(500).json({ error: err.message });
-      const token = jwt.sign({ id: this.lastID, email, role }, process.env.JWT_SECRET);
-      res.json({ token, role });
+  // Generate unique membership ID
+  generateUniqueMembershipId(async (err, membershipId) => {
+    if (err) {
+      return res.status(500).json({ error: 'Failed to generate membership ID' });
     }
-  );
+    
+    const hashedPassword = await bcrypt.hash(password, 10);
+    db.run(
+      `INSERT INTO users (fullName, dob, gender, sport, contact, email, password, role, membership_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [fullName, dob, gender, sport, contact, email, hashedPassword, role, membershipId],
+      function (err) {
+        if (err) return res.status(500).json({ error: err.message });
+        const token = jwt.sign({ id: this.lastID, email, role }, process.env.JWT_SECRET);
+        res.json({ token, role, membershipId });
+      }
+    );
+  });
 });
 
 // Login - now includes role in response
@@ -107,7 +114,7 @@ app.post('/api/auth/login', (req, res) => {
 
 // Get current user profile
 app.get('/api/auth/profile', enhancedAuthMiddleware, (req, res) => {
-  db.get(`SELECT id, fullName, email, role, dob, gender, sport, contact FROM users WHERE id = ?`, 
+  db.get(`SELECT id, fullName, email, role, dob, gender, sport, contact, membership_id FROM users WHERE id = ?`, 
     [req.user.id], (err, user) => {
       if (err) return res.status(500).json({ error: err.message });
       if (!user) return res.status(404).json({ message: 'User not found' });

@@ -16,51 +16,52 @@
     }
     
     .hero-bg {
-      background: linear-gradient(135deg, rgba(0,0,0,0.7), rgba(0,0,0,0.5)), 
-                  url('https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80');
+      background: linear-gradient(135deg, rgba(0,0,0,0.8), rgba(0,0,0,0.6)), 
+                  url('data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCADhAOEDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD3+iiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigD//2Q==');
       background-size: cover;
       background-position: center;
       background-attachment: fixed;
     }
     
     .gradient-text {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #ffffff 0%, #e5e7eb 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
     
     .btn-primary {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
       transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     }
     
     .btn-primary:hover {
       transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+      background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
     }
     
     .card {
       backdrop-filter: blur(10px);
       background: rgba(255, 255, 255, 0.95);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(229, 231, 235, 0.3);
       transition: all 0.3s ease;
     }
     
     .card:hover {
       transform: translateY(-5px);
-      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.15);
     }
     
     .nav-glass {
       backdrop-filter: blur(10px);
-      background: rgba(0, 0, 0, 0.9);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(17, 24, 39, 0.95);
+      border-bottom: 1px solid rgba(75, 85, 99, 0.3);
     }
     
     .stats-card {
-      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
       color: white;
     }
   </style>
@@ -123,13 +124,13 @@
             <i class="fas fa-tachometer-alt mr-2"></i>View Dashboard
           </button>
 
-          <button onclick="window.location.href='strength-form.html'" class="bg-purple-600 border-2 border-purple-600 px-8 py-4 rounded-full text-white font-semibold text-lg hover:bg-purple-700 hover:border-purple-700 transition-all">
+          <button onclick="window.location.href='strength-form.html'" class="bg-gray-600 border-2 border-gray-600 px-8 py-4 rounded-full text-white font-semibold text-lg hover:bg-gray-700 hover:border-gray-700 transition-all">
             <i class="fas fa-dumbbell mr-2"></i>Strength Assessment
           </button>
-          <button onclick="window.location.href='speed-form.html'" class="bg-blue-600 border-2 border-blue-600 px-8 py-4 rounded-full text-white font-semibold text-lg hover:bg-blue-700 hover:border-blue-700 transition-all">
+          <button onclick="window.location.href='speed-form.html'" class="bg-gray-700 border-2 border-gray-700 px-8 py-4 rounded-full text-white font-semibold text-lg hover:bg-gray-800 hover:border-gray-800 transition-all">
             <i class="fas fa-stopwatch mr-2"></i>Speed Assessment
           </button>
-          <button onclick="window.location.href='agility-form.html'" class="bg-orange-600 border-2 border-orange-600 px-8 py-4 rounded-full text-white font-semibold text-lg hover:bg-orange-700 hover:border-orange-700 transition-all">
+          <button onclick="window.location.href='agility-form.html'" class="bg-gray-800 border-2 border-gray-800 px-8 py-4 rounded-full text-white font-semibold text-lg hover:bg-gray-900 hover:border-gray-900 transition-all">
             <i class="fas fa-running mr-2"></i>Agility Assessment
           </button>
         </div>

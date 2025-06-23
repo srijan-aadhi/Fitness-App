@@ -18,7 +18,7 @@ const USER_ROLES = {
 };
 
 db.serialize(() => {
-  // Create users table with role column
+  // Create users table with role column and membership_id
   db.run(`CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     fullName TEXT,
@@ -29,6 +29,7 @@ db.serialize(() => {
     email TEXT UNIQUE,
     password TEXT,
     role TEXT DEFAULT 'Athlete' CHECK (role IN ('Super Admin', 'Admin', 'Tester', 'Athlete')),
+    membership_id TEXT UNIQUE,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
@@ -38,6 +39,13 @@ db.serialize(() => {
   db.run(`ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'Athlete'`, (err) => {
     if (err && !err.message.includes('duplicate column name')) {
       console.error('Error adding role column:', err.message);
+    }
+  });
+
+  // Add membership_id column to existing users table if it doesn't exist
+  db.run(`ALTER TABLE users ADD COLUMN membership_id TEXT`, (err) => {
+    if (err && !err.message.includes('duplicate column name')) {
+      console.error('Error adding membership_id column:', err.message);
     }
   });
 
@@ -271,6 +279,30 @@ db.serialize(() => {
 
 });
 
+// Helper function to generate unique membership ID
+function generateMembershipId() {
+  const prefix = 'DSNC';
+  const timestamp = Date.now().toString().slice(-6); // Last 6 digits of timestamp
+  const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+  return `${prefix}${timestamp}${random}`;
+}
+
+// Helper function to ensure unique membership ID
+function generateUniqueMembershipId(callback) {
+  const membershipId = generateMembershipId();
+  
+  db.get(`SELECT id FROM users WHERE membership_id = ?`, [membershipId], (err, row) => {
+    if (err) {
+      callback(err, null);
+    } else if (row) {
+      // ID already exists, generate a new one
+      generateUniqueMembershipId(callback);
+    } else {
+      callback(null, membershipId);
+    }
+  });
+}
+
 // Helper functions for role management
 const roleHelpers = {
   // Check if a role is valid
@@ -295,4 +327,4 @@ const roleHelpers = {
   }
 };
 
-module.exports = { db, USER_ROLES, roleHelpers };
+module.exports = { db, USER_ROLES, roleHelpers, generateUniqueMembershipId };

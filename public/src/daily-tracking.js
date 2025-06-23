@@ -437,9 +437,27 @@ document.getElementById('dailyTrackingForm').addEventListener('submit', async (e
   document.getElementById('errorMessage').classList.add('hidden');
 
   // Collect form data from both steps using the new getFieldValue function
+  const userRole = localStorage.getItem('userRole') || 'Athlete';
+  let membershipId = document.getElementById('membershipId').value.trim();
+  
+  // For athletes, get membership ID from their profile if field is hidden/empty
+  if (userRole === 'Athlete' && !membershipId) {
+    try {
+      const res = await fetch('https://fitness-app-production-b5bb.up.railway.app/api/auth/profile', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const userData = await res.json();
+        membershipId = userData.membership_id || '';
+      }
+    } catch (err) {
+      console.error('Failed to fetch membership ID:', err);
+    }
+  }
+  
   const formData = {
     // Step 1 data
-    membershipId: document.getElementById('membershipId').value.trim(),
+    membershipId: membershipId,
     trainingMinutes: getFieldValue('trainingMinutes'),
     previousDay: document.getElementById('previousDay').value,
     appetite: getFieldValue('appetite'),
@@ -449,7 +467,7 @@ document.getElementById('dailyTrackingForm').addEventListener('submit', async (e
     snackTime: getFieldValue('snackTime'),
     dinnerTime: getFieldValue('dinnerTime'),
     
-    // Step 2 data
+    // Step 3 data
     sleepLength: getFieldValue('sleepLength'),
     sleepQuality: getFieldValue('sleepQuality'),
     tiredness: getFieldValue('tiredness'),
@@ -608,19 +626,55 @@ function validateCustomTrainingMinutes() {
   return true;
 }
 
-// Check user role on page load and add role indicator
-function checkUserRole() {
+// Check user role on page load and handle membership ID
+async function checkUserRole() {
   const userRole = localStorage.getItem('userRole') || 'Athlete';
+  const token = localStorage.getItem('token');
   
   // Add role indicator
   const roleIndicator = document.createElement('div');
-  roleIndicator.className = 'fixed bottom-4 left-4 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold z-50 shadow-lg';
+  roleIndicator.className = 'fixed bottom-4 left-4 bg-gray-800 text-white px-3 py-1 rounded-full text-sm font-semibold z-50 shadow-lg';
   roleIndicator.textContent = `Role: ${userRole}`;
   document.body.appendChild(roleIndicator);
+  
+  // Handle membership ID field based on role
+  const membershipIdField = document.getElementById('membershipId');
+  const membershipIdContainer = membershipIdField?.parentElement;
+  
+  if (userRole === 'Athlete') {
+    // For athletes, auto-fill their membership ID and hide the field
+    try {
+      const res = await fetch('https://fitness-app-production-b5bb.up.railway.app/api/auth/profile', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (res.ok) {
+        const userData = await res.json();
+        if (membershipIdField) {
+          membershipIdField.value = userData.membership_id || '';
+          membershipIdField.readOnly = true;
+          membershipIdField.className = 'w-full p-4 border border-gray-300 rounded-xl bg-gray-100 text-gray-600 cursor-not-allowed';
+        }
+        
+        // Hide the entire membership ID container for athletes
+        if (membershipIdContainer) {
+          membershipIdContainer.style.display = 'none';
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch user profile for membership ID:', err);
+    }
+  } else {
+    // For other roles, keep the field visible and editable
+    if (membershipIdField) {
+      membershipIdField.readOnly = false;
+      membershipIdField.placeholder = 'Enter membership ID for the user';
+    }
+  }
 }
 
 // Initialize everything when page loads
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
   // Set default date to yesterday
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
@@ -636,7 +690,7 @@ document.addEventListener('DOMContentLoaded', function() {
   setupTrainingMinutesHandler();
   
   // Check user role
-  checkUserRole();
+  await checkUserRole();
   
   // Start with step 1
   showStep(1);
