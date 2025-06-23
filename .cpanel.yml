@@ -2,6 +2,10 @@
 deployment:
   tasks:
     - export DEPLOYPATH=/home/$USER/public_html/app-dsnc-in/
+    - find $DEPLOYPATH -maxdepth 1 -name "*.html" -delete
+    - find $DEPLOYPATH -maxdepth 1 -name "*.js" -delete
+    - find $DEPLOYPATH -maxdepth 1 -name "*.css" -delete
+    - /bin/rm -rf $DEPLOYPATH/src 2>/dev/null || true
     - /bin/cp -R public/* $DEPLOYPATH
     - /bin/cp -R public/.* $DEPLOYPATH 2>/dev/null || true
     - find $DEPLOYPATH -type f -name "*.html" -exec chmod 644 {} \;
