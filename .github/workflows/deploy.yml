@@ -14,6 +14,19 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v4
       
+    - name: Test Deployment Path (Dry Run)
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+      with:
+        server: ${{ secrets.FTP_HOST }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        protocol: ftp
+        port: 21
+        local-dir: ./public/
+        server-dir: /public_html/app-dsnc-in/
+        dry-run: true
+        log-level: verbose
+        
     - name: Deploy to Bluehost via FTP
       uses: SamKirkland/FTP-Deploy-Action@v4.3.4
       with:
@@ -23,7 +36,8 @@ jobs:
         protocol: ftp
         port: 21
         local-dir: ./public/
-        server-dir: public_html/app-dsnc-in/
+        server-dir: /public_html/app-dsnc-in/
+        log-level: verbose
         exclude: |
           **/.git*
           **/.git*/**
@@ -33,4 +47,4 @@ jobs:
           **/.env
           
     - name: Deployment Success
-      run: echo "✅ FTP Deployment completed successfully to public_html/app-dsnc-in/ for app.dsnc.in!" 
+      run: echo "✅ FTP Deployment completed successfully INTO /public_html/app-dsnc-in/ for app.dsnc.in!" 
