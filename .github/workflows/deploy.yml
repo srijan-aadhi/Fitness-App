@@ -20,6 +20,8 @@ jobs:
         server: ${{ secrets.FTP_HOST }}
         username: ${{ secrets.FTP_USERNAME }}
         password: ${{ secrets.FTP_PASSWORD }}
+        protocol: ftp
+        port: 21
         local-dir: ./public/
         server-dir: /public_html/app-dsnc-in/
         exclude: |
@@ -31,4 +33,4 @@ jobs:
           **/.env
           
     - name: Deployment Success
-      run: echo "✅ Deployment completed successfully!" 
+      run: echo "✅ FTP Deployment completed successfully!" 
