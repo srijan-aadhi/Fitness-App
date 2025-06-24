@@ -1,0 +1,47 @@
+name: FTP Debug Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  debug:
+    name: Debug FTP Connection
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: Install FTP tools
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ftp lftp
+        
+    - name: Test FTP Connection and List Directories
+      run: |
+        echo "🔍 Testing FTP connection..."
+        lftp -c "
+        set ftp:ssl-allow no;
+        open -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }} ${{ secrets.FTP_HOST }};
+        pwd;
+        ls -la;
+        echo '--- Checking if public_html exists ---';
+        cd public_html 2>/dev/null && pwd && ls -la || echo 'public_html not found';
+        echo '--- Checking if app-dsnc-in exists ---';
+        cd app-dsnc-in 2>/dev/null && pwd && ls -la || echo 'app-dsnc-in not found in public_html';
+        quit
+        "
+        
+    - name: Upload a single test file
+      run: |
+        echo "TEST FILE - $(date)" > test-upload.txt
+        echo "📁 Uploading test file..."
+        lftp -c "
+        set ftp:ssl-allow no;
+        open -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }} ${{ secrets.FTP_HOST }};
+        cd public_html/app-dsnc-in/;
+        put test-upload.txt;
+        ls -la test-upload.txt;
+        quit
+        "
+        echo "✅ Test file upload completed!" 
