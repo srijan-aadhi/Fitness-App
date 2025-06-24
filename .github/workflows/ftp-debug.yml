@@ -17,24 +17,33 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y ftp lftp
         
-    - name: Check Directory Structure and Files
+    - name: Check What's Actually in app-dsnc-in Directory
       run: |
-        echo "🔍 Testing FTP connection and checking app-dsnc-in directory..."
+        echo "🔍 Checking EXACTLY what's in app-dsnc-in directory..."
         lftp -c "
         set ftp:ssl-allow no;
         open -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }} ${{ secrets.FTP_HOST }};
-        echo '=== FTP ROOT ===';
+        echo '=== NAVIGATING TO APP-DSNC-IN ===';
+        cd public_html/app-dsnc-in;
         pwd;
+        echo '=== LISTING ALL FILES IN APP-DSNC-IN ===';
         ls -la;
-        echo '=== PUBLIC_HTML DIRECTORY ===';
-        cd public_html;
-        pwd;
-        ls -la;
-        echo '=== APP-DSNC-IN DIRECTORY ===';
-        cd app-dsnc-in 2>/dev/null && pwd && ls -la || echo 'app-dsnc-in directory does not exist';
+        echo '=== CHECKING FOR INDEX.HTML SPECIFICALLY ===';
+        ls -la index.html 2>/dev/null || echo 'index.html NOT FOUND';
+        echo '=== CHECKING FOR SRC DIRECTORY ===';
+        ls -la src/ 2>/dev/null || echo 'src directory NOT FOUND';
+        echo '=== COUNTING TOTAL FILES ===';
+        find . -type f | wc -l;
+        echo '=== LISTING FIRST 10 FILES ===';
+        find . -type f | head -10;
         quit
         "
         
+    - name: Compare with Local Files
+      run: |
+        echo "📁 Local files that SHOULD be on server:"
+        find ./public/ -type f | sort
+
     - name: List Local Files to Upload
       run: |
         echo "📁 Files in ./public/ that should be uploaded:"
