@@ -1,0 +1,22 @@
+name: Deploy Alternative FTP
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy via Alternative FTP
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: Deploy via FTP Upload
+      uses: sebastianpopp/ftp-action@releases/v2
+      with:
+        host: ${{ secrets.FTP_HOST }}
+        user: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        localDir: "./public/"
+        remoteDir: "/public_html/app-dsnc-in/" 

@@ -1,0 +1,33 @@
+name: Deploy via File Manager Method
+
+on:
+  workflow_dispatch:
+
+jobs:
+  package:
+    name: Package for Manual Upload
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: Create Deployment Package
+      run: |
+        cd public
+        zip -r ../deployment-package.zip . -x "*.git*" "node_modules/*"
+        
+    - name: Upload Deployment Package
+      uses: actions/upload-artifact@v3
+      with:
+        name: deployment-package
+        path: deployment-package.zip
+        
+    - name: Instructions
+      run: |
+        echo "📦 Deployment package created!"
+        echo "📋 Manual deployment steps:"
+        echo "1. Download the 'deployment-package' artifact"
+        echo "2. Login to Bluehost cPanel → File Manager"
+        echo "3. Navigate to /public_html/app-dsnc-in/"
+        echo "4. Upload and extract deployment-package.zip" 
