@@ -121,28 +121,40 @@ function updateUIForRole() {
     injuryReportsBtn.style.display = 'block';
   }
   
-  // Hide assessment forms for Athletes
-  if (userRole === 'Athlete') {
-    // Hide navigation buttons for assessment forms
-    const assessmentButtons = [
-      document.querySelector('button[onclick="window.location.href=\'strength-form.html\'"]'),
-      document.querySelector('button[onclick="window.location.href=\'speed-form.html\'"]'),
-      document.querySelector('button[onclick="window.location.href=\'agility-form.html\'"]')
-    ];
-    
-    assessmentButtons.forEach(btn => {
+  // Role-based UI control logic
+  const isAthlete = userRole === 'Athlete';
+  const isTrainer = userRole === 'Tester' || userRole === 'Admin' || userRole === 'Super Admin';
+  
+  if (isAthlete) {
+    // Hide all assessment form buttons for Athletes (both navbar and hero section)
+    const allAssessmentButtons = document.querySelectorAll('button[onclick*="strength-form.html"], button[onclick*="speed-form.html"], button[onclick*="agility-form.html"]');
+    allAssessmentButtons.forEach(btn => {
       if (btn) btn.style.display = 'none';
     });
     
-    // Hide hero section assessment buttons
-    const heroAssessmentButtons = [
-      document.querySelector('button[onclick="window.location.href=\'strength-form.html\'"]'),
-      document.querySelector('button[onclick="window.location.href=\'speed-form.html\'"]'),
-      document.querySelector('button[onclick="window.location.href=\'agility-form.html\'"]')
-    ];
+    // Hide Individual Results Filter for Athletes
+    const allFilterContainers = document.querySelectorAll('.bg-gray-800');
+    allFilterContainers.forEach(container => {
+      const label = container.querySelector('label');
+      if (label && label.textContent.includes('Individual Results Filter')) {
+        container.style.display = 'none';
+      }
+    });
+  }
+  
+  if (isTrainer) {
+    // Hide Daily Tracking button for Trainers (dashboard)
+    const dailyTrackingBtn = document.querySelector('button[onclick="window.location.href=\'daily-tracking.html\'"]');
+    if (dailyTrackingBtn) {
+      dailyTrackingBtn.style.display = 'none';
+    }
     
-    heroAssessmentButtons.forEach(btn => {
-      if (btn) btn.style.display = 'none';
+    // Hide all Injury Form buttons for Trainers (both navbar and hero section)
+    const allInjuryFormButtons = document.querySelectorAll('button[onclick="show(\'entry\')"]');
+    allInjuryFormButtons.forEach(btn => {
+      if (btn && (btn.textContent.includes('Injury Form') || btn.textContent.includes('Submit Injury Form'))) {
+        btn.style.display = 'none';
+      }
     });
   }
   
