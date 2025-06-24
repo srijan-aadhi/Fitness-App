@@ -123,7 +123,8 @@ function updateUIForRole() {
   
   // Role-based UI control logic
   const isAthlete = userRole === 'Athlete';
-  const isTrainer = userRole === 'Tester' || userRole === 'Admin' || userRole === 'Super Admin';
+  const isTrainer = userRole === 'Tester' || userRole === 'Admin';
+  const isSuperAdmin = userRole === 'Super Admin';
   
   if (isAthlete) {
     // Hide all assessment form buttons for Athletes (both navbar and hero section)
@@ -143,17 +144,35 @@ function updateUIForRole() {
   }
   
   if (isTrainer) {
-    // Hide Daily Tracking button for Trainers (dashboard)
+    // Hide Daily Tracking button for Trainers (but NOT Super Admin)
     const dailyTrackingBtn = document.querySelector('button[onclick="window.location.href=\'daily-tracking.html\'"]');
     if (dailyTrackingBtn) {
       dailyTrackingBtn.style.display = 'none';
     }
     
-    // Hide all Injury Form buttons for Trainers (both navbar and hero section)
+    // Hide all Injury Form buttons for Trainers (but NOT Super Admin)
     const allInjuryFormButtons = document.querySelectorAll('button[onclick="show(\'entry\')"]');
     allInjuryFormButtons.forEach(btn => {
       if (btn && (btn.textContent.includes('Injury Form') || btn.textContent.includes('Submit Injury Form'))) {
         btn.style.display = 'none';
+      }
+    });
+  }
+  
+  // Super Admin gets access to ALL forms - no restrictions
+  if (isSuperAdmin) {
+    // Ensure all buttons are visible for Super Admin
+    const allButtons = document.querySelectorAll('button[onclick*="strength-form.html"], button[onclick*="speed-form.html"], button[onclick*="agility-form.html"], button[onclick="window.location.href=\'daily-tracking.html\'"], button[onclick="show(\'entry\')"]');
+    allButtons.forEach(btn => {
+      if (btn) btn.style.display = '';
+    });
+    
+    // Ensure Individual Results Filter is visible for Super Admin
+    const allFilterContainers = document.querySelectorAll('.bg-gray-800');
+    allFilterContainers.forEach(container => {
+      const label = container.querySelector('label');
+      if (label && label.textContent.includes('Individual Results Filter')) {
+        container.style.display = '';
       }
     });
   }
