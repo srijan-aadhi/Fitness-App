@@ -17,21 +17,31 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y ftp lftp
         
-    - name: Test FTP Connection and List Directories
+    - name: Check Directory Structure and Files
       run: |
-        echo "🔍 Testing FTP connection..."
+        echo "🔍 Testing FTP connection and checking app-dsnc-in directory..."
         lftp -c "
         set ftp:ssl-allow no;
         open -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }} ${{ secrets.FTP_HOST }};
+        echo '=== FTP ROOT ===';
         pwd;
         ls -la;
-        echo '--- Checking if public_html exists ---';
-        cd public_html 2>/dev/null && pwd && ls -la || echo 'public_html not found';
-        echo '--- Checking if app-dsnc-in exists ---';
-        cd app-dsnc-in 2>/dev/null && pwd && ls -la || echo 'app-dsnc-in not found in public_html';
+        echo '=== PUBLIC_HTML DIRECTORY ===';
+        cd public_html;
+        pwd;
+        ls -la;
+        echo '=== APP-DSNC-IN DIRECTORY ===';
+        cd app-dsnc-in 2>/dev/null && pwd && ls -la || echo 'app-dsnc-in directory does not exist';
         quit
         "
         
+    - name: List Local Files to Upload
+      run: |
+        echo "📁 Files in ./public/ that should be uploaded:"
+        find ./public/ -type f | head -10
+        echo "📊 Total files in ./public/:"
+        find ./public/ -type f | wc -l
+
     - name: Upload a single test file
       run: |
         echo "TEST FILE - $(date)" > test-upload.txt
