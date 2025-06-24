@@ -23,7 +23,7 @@ jobs:
         protocol: ftp
         port: 21
         local-dir: ./public/
-        server-dir: ./public_html/app-dsnc-in/
+        server-dir: public_html/app-dsnc-in/
         exclude: |
           **/.git*
           **/.git*/**
@@ -33,4 +33,4 @@ jobs:
           **/.env
           
     - name: Deployment Success
-      run: echo "✅ FTP Deployment completed successfully to ./public_html/app-dsnc-in/!" 
+      run: echo "✅ FTP Deployment completed successfully to public_html/app-dsnc-in/ for app.dsnc.in!" 
