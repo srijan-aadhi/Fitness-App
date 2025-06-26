@@ -33,7 +33,7 @@ app.use(bodyParser.json());
 // Root route for API health check
 app.get('/', (req, res) => {
   res.json({ 
-    message: 'Fitness App API Server', 
+    message: 'DARES API Server', 
     status: 'running',
     timestamp: new Date().toISOString(),
     jwtSecret: process.env.JWT_SECRET ? 'Set' : 'Missing'

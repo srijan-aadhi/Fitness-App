@@ -1,5 +1,0 @@
----
-deployment:
-  tasks:
-    - export DEPLOYPATH=/home/$USER/public_html/app-dsnc-in/
-    - /bin/cp -R public/* $DEPLOYPATH 
