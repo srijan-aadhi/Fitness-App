@@ -2,10 +2,13 @@ require('dotenv').config();
 const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcryptjs');
 
-// Use environment variable or fallback to default path
-const dbPath = process.env.DB_PATH || './database/db.sqlite';
+// Use Railway volume path if available, otherwise use environment variable or fallback
+const dbPath = process.env.RAILWAY_VOLUME_MOUNT_PATH 
+  ? `${process.env.RAILWAY_VOLUME_MOUNT_PATH}/db.sqlite`
+  : process.env.DB_PATH || './database/db.sqlite';
 console.log('Using DB path:', dbPath);
 console.log('DB_PATH env var:', process.env.DB_PATH);
+console.log('Railway Volume Path:', process.env.RAILWAY_VOLUME_MOUNT_PATH);
 
 const db = new sqlite3.Database(dbPath);
 
