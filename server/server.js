@@ -10,6 +10,7 @@ require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+console.log('🔌 Port configuration:', { PORT, envPort: process.env.PORT });
 
 // Configure CORS for global access
 const corsOptions = {
@@ -36,7 +37,18 @@ app.get('/', (req, res) => {
     message: 'DARES API Server', 
     status: 'running',
     timestamp: new Date().toISOString(),
-    jwtSecret: process.env.JWT_SECRET ? 'Set' : 'Missing'
+    jwtSecret: process.env.JWT_SECRET ? 'Set' : 'Missing',
+    port: PORT,
+    nodeEnv: process.env.NODE_ENV || 'development'
+  });
+});
+
+// Health check endpoint for Railway
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'healthy',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString()
   });
 });
 
@@ -84,15 +96,23 @@ app.post('/api/auth/signup', async (req, res) => {
   // Generate unique membership ID
   generateUniqueMembershipId(async (err, membershipId) => {
     if (err) {
-      return res.status(500).json({ error: 'Failed to generate membership ID' });
+      console.error('❌ Membership ID generation failed:', err.message);
+      return res.status(500).json({ error: 'Failed to generate membership ID: ' + err.message });
     }
+    
+    console.log(`👤 Creating user: ${fullName} (${email}) with ID: ${membershipId}`);
     
     const hashedPassword = await bcrypt.hash(password, 10);
     db.run(
       `INSERT INTO users (fullName, dob, gender, sport, contact, email, password, role, membership_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [fullName, dob, gender, sport, contact, email, hashedPassword, role, membershipId],
       function (err) {
-        if (err) return res.status(500).json({ error: err.message });
+        if (err) {
+          console.error('❌ User creation failed:', err.message);
+          return res.status(500).json({ error: 'User creation failed: ' + err.message });
+        }
+        
+        console.log(`✅ User created successfully with ID: ${this.lastID}`);
         const token = jwt.sign({ id: this.lastID, email, role }, process.env.JWT_SECRET);
         res.json({ token, role, membershipId });
       }
@@ -1162,8 +1182,42 @@ app.get('/api/admin/stats', enhancedAuthMiddleware, requireRole('Admin'), (req, 
 });
 
 // Listen on both IPv4 and IPv6 for global accessibility
-app.listen(PORT, '::', () => {
-  console.log(`Server running at http://localhost:${PORT} (IPv4 and IPv6)`);
+const server = app.listen(PORT, '::', () => {
+  console.log(`🚀 DARES Server running at http://localhost:${PORT} (IPv4 and IPv6)`);
   console.log('Available user roles:', Object.values(USER_ROLES).map(r => r.name).join(', '));
   console.log('CORS configured for global access');
+  console.log('✅ Server startup completed successfully');
 });
+
+// Graceful shutdown handling
+process.on('SIGTERM', () => {
+  console.log('📝 SIGTERM received, shutting down gracefully...');
+  server.close(() => {
+    console.log('✅ Server closed successfully');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('📝 SIGINT received, shutting down gracefully...');
+  server.close(() => {
+    console.log('✅ Server closed successfully');
+    process.exit(0);
+  });
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+  console.error('❌ Uncaught Exception:', error);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1);
+});
+
+// Keep process alive
+setInterval(() => {
+  // Health check heartbeat (Railway expects process to stay active)
+}, 30000);
