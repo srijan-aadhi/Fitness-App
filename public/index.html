@@ -199,151 +199,157 @@
       <div class="container mx-auto px-6 py-8">
         
         <!-- Dashboard Header -->
-        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8">
-          <div>
-            <h2 class="text-3xl font-bold mb-2">Analytics Dashboard</h2>
-            <p class="text-gray-400">Comprehensive performance analytics and insights</p>
+        <div class="text-center mb-6">
+          <h2 class="text-3xl font-bold mb-2">Analytics Dashboard</h2>
+          <p class="text-gray-400">Comprehensive performance analytics and insights</p>
+          
+          <!-- Daily Tracking Button -->
+          <div class="mt-4">
+            <button onclick="window.location.href='daily-tracking.html'" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold text-base transition-all shadow-lg">
+              <i class="fas fa-calendar-day mr-2"></i>Go to Daily Tracking
+            </button>
+          </div>
+        </div>
+          
+        <!-- Controls Panel -->
+        <div class="flex flex-col lg:flex-row gap-4 mb-8 justify-center">
+          <!-- Membership ID Filter -->
+          <div class="bg-gray-800 p-4 rounded-lg max-w-sm">
+            <label class="block text-sm font-medium text-gray-300 mb-2">
+              <i class="fas fa-user-circle mr-2"></i>Filter by Membership ID
+            </label>
+            <input type="text" id="membershipFilter" placeholder="Enter Membership ID" 
+                   class="bg-gray-700 border border-gray-600 text-white px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-full">
+            <p class="text-xs text-gray-400 mt-2">
+              <i class="fas fa-info-circle mr-1"></i>Enter a specific membership ID to view one person's results, or leave blank for all users
+            </p>
           </div>
           
-          <!-- Controls Panel -->
-          <div class="flex flex-col lg:flex-row gap-4 mt-4 lg:mt-0">
-            <!-- Membership ID Filter -->
-            <div class="bg-gray-800 p-4 rounded-lg">
-              <label class="block text-sm font-medium text-gray-300 mb-2">
-                <i class="fas fa-user-circle mr-2"></i>Individual Results Filter
-              </label>
-              <input type="text" id="membershipFilter" placeholder="Enter Membership ID" 
-                     class="bg-gray-700 border border-gray-600 text-white px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-48">
-              <p class="text-xs text-gray-400 mt-2">
-                <i class="fas fa-info-circle mr-1"></i>Enter a specific membership ID to view one person's results, or leave blank for all users
-              </p>
-            </div>
-            
-            <!-- Time Period Filter -->
-            <div class="bg-gray-800 p-6 rounded-lg min-w-[400px]">
-              <div class="flex justify-between items-center mb-4">
+          <!-- Time Period Filter -->
+          <div class="bg-gray-800 p-4 rounded-lg max-w-md">
+              <div class="flex justify-between items-center mb-3">
                 <div>
-                  <label class="text-lg font-medium text-gray-300">Time Period Selection</label>
-                  <span id="selectedCount" class="text-sm text-blue-400 ml-3">(1 selected)</span>
+                  <label class="text-base font-medium text-gray-300">Time Period Selection</label>
+                  <span id="selectedCount" class="text-sm text-blue-400 ml-2">(1 selected)</span>
                 </div>
-                <div class="flex gap-3">
-                  <button id="selectAllMonths" class="text-sm bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded text-white transition-colors">
+                <div class="flex gap-2">
+                  <button id="selectAllMonths" class="text-xs bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded text-white transition-colors">
                     Select All
                   </button>
-                  <button id="clearAllMonths" class="text-sm bg-gray-600 hover:bg-gray-700 px-3 py-2 rounded text-white transition-colors">
+                  <button id="clearAllMonths" class="text-xs bg-gray-600 hover:bg-gray-700 px-2 py-1 rounded text-white transition-colors">
                     Clear All
                   </button>
                 </div>
               </div>
               
               <!-- Year Sections -->
-              <div class="space-y-4">
+              <div class="space-y-3">
                 <!-- 2025 -->
                 <div>
-                  <h4 class="text-sm font-semibold text-gray-400 mb-2 uppercase tracking-wide">2025</h4>
-                  <div class="grid grid-cols-3 gap-3">
-                    <label class="flex items-center bg-gray-700 p-3 rounded-lg hover:bg-gray-600 cursor-pointer transition-colors">
-                      <input type="checkbox" value="Jun-25" class="month-checkbox mr-3" checked>
-                      <span class="text-sm font-medium">June</span>
+                  <h4 class="text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wide">2025</h4>
+                  <div class="grid grid-cols-3 gap-2">
+                    <label class="flex items-center bg-gray-700 p-2 rounded hover:bg-gray-600 cursor-pointer transition-colors">
+                      <input type="checkbox" value="Jun-25" class="month-checkbox mr-2" checked>
+                      <span class="text-xs font-medium">June</span>
                     </label>
-                    <label class="flex items-center bg-gray-700 p-3 rounded-lg hover:bg-gray-600 cursor-pointer transition-colors">
-                      <input type="checkbox" value="May-25" class="month-checkbox mr-3">
-                      <span class="text-sm font-medium">May</span>
+                    <label class="flex items-center bg-gray-700 p-2 rounded hover:bg-gray-600 cursor-pointer transition-colors">
+                      <input type="checkbox" value="May-25" class="month-checkbox mr-2">
+                      <span class="text-xs font-medium">May</span>
                     </label>
-                    <label class="flex items-center bg-gray-700 p-3 rounded-lg hover:bg-gray-600 cursor-pointer transition-colors">
-                      <input type="checkbox" value="Apr-25" class="month-checkbox mr-3">
-                      <span class="text-sm font-medium">April</span>
+                    <label class="flex items-center bg-gray-700 p-2 rounded hover:bg-gray-600 cursor-pointer transition-colors">
+                      <input type="checkbox" value="Apr-25" class="month-checkbox mr-2">
+                      <span class="text-xs font-medium">April</span>
                     </label>
-                    <label class="flex items-center bg-gray-700 p-3 rounded-lg hover:bg-gray-600 cursor-pointer transition-colors">
-                      <input type="checkbox" value="Mar-25" class="month-checkbox mr-3">
-                      <span class="text-sm font-medium">March</span>
+                    <label class="flex items-center bg-gray-700 p-2 rounded hover:bg-gray-600 cursor-pointer transition-colors">
+                      <input type="checkbox" value="Mar-25" class="month-checkbox mr-2">
+                      <span class="text-xs font-medium">March</span>
                     </label>
-                    <label class="flex items-center bg-gray-700 p-3 rounded-lg hover:bg-gray-600 cursor-pointer transition-colors">
-                      <input type="checkbox" value="Feb-25" class="month-checkbox mr-3">
-                      <span class="text-sm font-medium">February</span>
+                    <label class="flex items-center bg-gray-700 p-2 rounded hover:bg-gray-600 cursor-pointer transition-colors">
+                      <input type="checkbox" value="Feb-25" class="month-checkbox mr-2">
+                      <span class="text-xs font-medium">February</span>
                     </label>
-                    <label class="flex items-center bg-gray-700 p-3 rounded-lg hover:bg-gray-600 cursor-pointer transition-colors">
-                      <input type="checkbox" value="Jan-25" class="month-checkbox mr-3">
-                      <span class="text-sm font-medium">January</span>
+                    <label class="flex items-center bg-gray-700 p-2 rounded hover:bg-gray-600 cursor-pointer transition-colors">
+                      <input type="checkbox" value="Jan-25" class="month-checkbox mr-2">
+                      <span class="text-xs font-medium">January</span>
                     </label>
                   </div>
                 </div>
 
                 <!-- 2024 -->
                 <div>
-                  <h4 class="text-sm font-semibold text-gray-400 mb-2 uppercase tracking-wide">2024</h4>
-                  <div class="grid grid-cols-3 gap-3">
-                    <label class="flex items-center bg-gray-700 p-3 rounded-lg hover:bg-gray-600 cursor-pointer transition-colors">
-                      <input type="checkbox" value="Dec-24" class="month-checkbox mr-3">
-                      <span class="text-sm font-medium">December</span>
+                  <h4 class="text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wide">2024</h4>
+                  <div class="grid grid-cols-3 gap-2">
+                    <label class="flex items-center bg-gray-700 p-2 rounded hover:bg-gray-600 cursor-pointer transition-colors">
+                      <input type="checkbox" value="Dec-24" class="month-checkbox mr-2">
+                      <span class="text-xs font-medium">December</span>
                     </label>
-                    <label class="flex items-center bg-gray-700 p-3 rounded-lg hover:bg-gray-600 cursor-pointer transition-colors">
-                      <input type="checkbox" value="Nov-24" class="month-checkbox mr-3">
-                      <span class="text-sm font-medium">November</span>
+                    <label class="flex items-center bg-gray-700 p-2 rounded hover:bg-gray-600 cursor-pointer transition-colors">
+                      <input type="checkbox" value="Nov-24" class="month-checkbox mr-2">
+                      <span class="text-xs font-medium">November</span>
                     </label>
-                    <label class="flex items-center bg-gray-700 p-3 rounded-lg hover:bg-gray-600 cursor-pointer transition-colors">
-                      <input type="checkbox" value="Oct-24" class="month-checkbox mr-3">
-                      <span class="text-sm font-medium">October</span>
+                    <label class="flex items-center bg-gray-700 p-2 rounded hover:bg-gray-600 cursor-pointer transition-colors">
+                      <input type="checkbox" value="Oct-24" class="month-checkbox mr-2">
+                      <span class="text-xs font-medium">October</span>
                     </label>
-                    <label class="flex items-center bg-gray-700 p-3 rounded-lg hover:bg-gray-600 cursor-pointer transition-colors">
-                      <input type="checkbox" value="Sep-24" class="month-checkbox mr-3">
-                      <span class="text-sm font-medium">September</span>
+                    <label class="flex items-center bg-gray-700 p-2 rounded hover:bg-gray-600 cursor-pointer transition-colors">
+                      <input type="checkbox" value="Sep-24" class="month-checkbox mr-2">
+                      <span class="text-xs font-medium">September</span>
                     </label>
-                    <label class="flex items-center bg-gray-700 p-3 rounded-lg hover:bg-gray-600 cursor-pointer transition-colors">
-                      <input type="checkbox" value="Aug-24" class="month-checkbox mr-3">
-                      <span class="text-sm font-medium">August</span>
+                    <label class="flex items-center bg-gray-700 p-2 rounded hover:bg-gray-600 cursor-pointer transition-colors">
+                      <input type="checkbox" value="Aug-24" class="month-checkbox mr-2">
+                      <span class="text-xs font-medium">August</span>
                     </label>
-                    <label class="flex items-center bg-gray-700 p-3 rounded-lg hover:bg-gray-600 cursor-pointer transition-colors">
-                      <input type="checkbox" value="Jul-24" class="month-checkbox mr-3">
-                      <span class="text-sm font-medium">July</span>
+                    <label class="flex items-center bg-gray-700 p-2 rounded hover:bg-gray-600 cursor-pointer transition-colors">
+                      <input type="checkbox" value="Jul-24" class="month-checkbox mr-2">
+                      <span class="text-xs font-medium">July</span>
                     </label>
-                    <label class="flex items-center bg-gray-700 p-3 rounded-lg hover:bg-gray-600 cursor-pointer transition-colors">
-                      <input type="checkbox" value="Jun-24" class="month-checkbox mr-3">
-                      <span class="text-sm font-medium">June</span>
+                    <label class="flex items-center bg-gray-700 p-2 rounded hover:bg-gray-600 cursor-pointer transition-colors">
+                      <input type="checkbox" value="Jun-24" class="month-checkbox mr-2">
+                      <span class="text-xs font-medium">June</span>
                     </label>
-                    <label class="flex items-center bg-gray-700 p-3 rounded-lg hover:bg-gray-600 cursor-pointer transition-colors">
-                      <input type="checkbox" value="May-24" class="month-checkbox mr-3">
-                      <span class="text-sm font-medium">May</span>
+                    <label class="flex items-center bg-gray-700 p-2 rounded hover:bg-gray-600 cursor-pointer transition-colors">
+                      <input type="checkbox" value="May-24" class="month-checkbox mr-2">
+                      <span class="text-xs font-medium">May</span>
                     </label>
-                    <label class="flex items-center bg-gray-700 p-3 rounded-lg hover:bg-gray-600 cursor-pointer transition-colors">
-                      <input type="checkbox" value="Apr-24" class="month-checkbox mr-3">
-                      <span class="text-sm font-medium">April</span>
+                    <label class="flex items-center bg-gray-700 p-2 rounded hover:bg-gray-600 cursor-pointer transition-colors">
+                      <input type="checkbox" value="Apr-24" class="month-checkbox mr-2">
+                      <span class="text-xs font-medium">April</span>
                     </label>
-                    <label class="flex items-center bg-gray-700 p-3 rounded-lg hover:bg-gray-600 cursor-pointer transition-colors">
-                      <input type="checkbox" value="Mar-24" class="month-checkbox mr-3">
-                      <span class="text-sm font-medium">March</span>
+                    <label class="flex items-center bg-gray-700 p-2 rounded hover:bg-gray-600 cursor-pointer transition-colors">
+                      <input type="checkbox" value="Mar-24" class="month-checkbox mr-2">
+                      <span class="text-xs font-medium">March</span>
                     </label>
-                    <label class="flex items-center bg-gray-700 p-3 rounded-lg hover:bg-gray-600 cursor-pointer transition-colors">
-                      <input type="checkbox" value="Feb-24" class="month-checkbox mr-3">
-                      <span class="text-sm font-medium">February</span>
+                    <label class="flex items-center bg-gray-700 p-2 rounded hover:bg-gray-600 cursor-pointer transition-colors">
+                      <input type="checkbox" value="Feb-24" class="month-checkbox mr-2">
+                      <span class="text-xs font-medium">February</span>
                     </label>
-                    <label class="flex items-center bg-gray-700 p-3 rounded-lg hover:bg-gray-600 cursor-pointer transition-colors">
-                      <input type="checkbox" value="Jan-24" class="month-checkbox mr-3">
-                      <span class="text-sm font-medium">January</span>
+                    <label class="flex items-center bg-gray-700 p-2 rounded hover:bg-gray-600 cursor-pointer transition-colors">
+                      <input type="checkbox" value="Jan-24" class="month-checkbox mr-2">
+                      <span class="text-xs font-medium">January</span>
                     </label>
                   </div>
                 </div>
 
                 <!-- 2023 -->
                 <div>
-                  <h4 class="text-sm font-semibold text-gray-400 mb-2 uppercase tracking-wide">2023</h4>
-                  <div class="grid grid-cols-3 gap-3">
-                    <label class="flex items-center bg-gray-700 p-3 rounded-lg hover:bg-gray-600 cursor-pointer transition-colors">
-                      <input type="checkbox" value="Dec-23" class="month-checkbox mr-3">
-                      <span class="text-sm font-medium">December</span>
+                  <h4 class="text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wide">2023</h4>
+                  <div class="grid grid-cols-3 gap-2">
+                    <label class="flex items-center bg-gray-700 p-2 rounded hover:bg-gray-600 cursor-pointer transition-colors">
+                      <input type="checkbox" value="Dec-23" class="month-checkbox mr-2">
+                      <span class="text-xs font-medium">December</span>
                     </label>
-                    <label class="flex items-center bg-gray-700 p-3 rounded-lg hover:bg-gray-600 cursor-pointer transition-colors">
-                      <input type="checkbox" value="Nov-23" class="month-checkbox mr-3">
-                      <span class="text-sm font-medium">November</span>
+                    <label class="flex items-center bg-gray-700 p-2 rounded hover:bg-gray-600 cursor-pointer transition-colors">
+                      <input type="checkbox" value="Nov-23" class="month-checkbox mr-2">
+                      <span class="text-xs font-medium">November</span>
                     </label>
                   </div>
                 </div>
               </div>
               
               <!-- Month-wise toggle -->
-              <div class="mt-6 pt-4 border-t border-gray-600">
-                <label class="flex items-center text-sm text-gray-300">
-                  <input type="checkbox" id="monthWiseFilter" class="mr-3">
+              <div class="mt-4 pt-3 border-t border-gray-600">
+                <label class="flex items-center text-xs text-gray-300">
+                  <input type="checkbox" id="monthWiseFilter" class="mr-2">
                   <span class="font-medium">Enable month-wise analysis</span>
                 </label>
               </div>
@@ -437,12 +443,7 @@
 
         </div>
 
-        <!-- Daily Tracking Button -->
-        <div class="text-center mt-8">
-          <button onclick="window.location.href='daily-tracking.html'" class="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-xl font-semibold text-lg transition-all shadow-lg">
-            <i class="fas fa-calendar-day mr-2"></i>Go to Daily Tracking
-          </button>
-        </div>
+
 
       </div>
     </div>
