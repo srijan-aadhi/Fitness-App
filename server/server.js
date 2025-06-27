@@ -1187,22 +1187,47 @@ const server = app.listen(PORT, '::', () => {
   console.log('Available user roles:', Object.values(USER_ROLES).map(r => r.name).join(', '));
   console.log('CORS configured for global access');
   console.log('✅ Server startup completed successfully');
+  console.log('🕐 Server started at:', new Date().toISOString());
+  console.log('💾 Memory usage:', process.memoryUsage());
 });
 
 // Graceful shutdown handling
 process.on('SIGTERM', () => {
   console.log('📝 SIGTERM received, shutting down gracefully...');
+  
+  // Set a timeout to force exit if graceful shutdown takes too long
+  const shutdownTimeout = setTimeout(() => {
+    console.log('⚠️ Forced shutdown due to timeout');
+    process.exit(1);
+  }, 10000); // 10 seconds
+  
   server.close(() => {
+    clearTimeout(shutdownTimeout);
     console.log('✅ Server closed successfully');
-    process.exit(0);
+    db.close((err) => {
+      if (err) console.error('Error closing database:', err);
+      else console.log('✅ Database closed successfully');
+      process.exit(0);
+    });
   });
 });
 
 process.on('SIGINT', () => {
   console.log('📝 SIGINT received, shutting down gracefully...');
+  
+  const shutdownTimeout = setTimeout(() => {
+    console.log('⚠️ Forced shutdown due to timeout');
+    process.exit(1);
+  }, 10000);
+  
   server.close(() => {
+    clearTimeout(shutdownTimeout);
     console.log('✅ Server closed successfully');
-    process.exit(0);
+    db.close((err) => {
+      if (err) console.error('Error closing database:', err);
+      else console.log('✅ Database closed successfully');
+      process.exit(0);
+    });
   });
 });
 
