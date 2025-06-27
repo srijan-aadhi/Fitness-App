@@ -1,16 +1,47 @@
 require('dotenv').config(); 
 const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcryptjs');
+const fs = require('fs');
+const path = require('path');
 
 // Use Railway volume path if available, otherwise use environment variable or fallback
 const dbPath = process.env.RAILWAY_VOLUME_MOUNT_PATH 
   ? `${process.env.RAILWAY_VOLUME_MOUNT_PATH}/db.sqlite`
   : process.env.DB_PATH || './database/db.sqlite';
+const oldDbPath = './database/db.sqlite'; // Original location
+
 console.log('Using DB path:', dbPath);
 console.log('DB_PATH env var:', process.env.DB_PATH);
 console.log('Railway Volume Path:', process.env.RAILWAY_VOLUME_MOUNT_PATH);
 
-const db = new sqlite3.Database(dbPath);
+// Ensure the directory exists before creating the database
+const dbDirectory = path.dirname(dbPath);
+if (!fs.existsSync(dbDirectory)) {
+  console.log('Creating database directory:', dbDirectory);
+  fs.mkdirSync(dbDirectory, { recursive: true });
+}
+
+// Migrate existing database if using volume and old database exists
+if (process.env.RAILWAY_VOLUME_MOUNT_PATH && fs.existsSync(oldDbPath) && !fs.existsSync(dbPath)) {
+  console.log('🔄 Migrating existing database to volume storage...');
+  try {
+    fs.copyFileSync(oldDbPath, dbPath);
+    console.log('✅ Database migration completed successfully');
+  } catch (error) {
+    console.error('❌ Database migration failed:', error.message);
+    console.log('Will proceed with fresh database...');
+  }
+}
+
+const db = new sqlite3.Database(dbPath, (err) => {
+  if (err) {
+    console.error('❌ Database connection error:', err.message);
+    console.error('Database path attempted:', dbPath);
+    process.exit(1);
+  } else {
+    console.log('✅ Database connected successfully');
+  }
+});
 
 // Define valid user roles with hierarchy (higher number = higher access)
 const USER_ROLES = {
