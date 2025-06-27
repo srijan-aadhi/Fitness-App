@@ -45,10 +45,24 @@ app.get('/', (req, res) => {
 
 // Health check endpoint for Railway
 app.get('/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'healthy',
-    uptime: process.uptime(),
-    timestamp: new Date().toISOString()
+  // Test database connectivity
+  db.get('SELECT 1 as test', (err, row) => {
+    if (err) {
+      return res.status(503).json({ 
+        status: 'unhealthy',
+        error: 'Database connection failed',
+        uptime: process.uptime(),
+        timestamp: new Date().toISOString()
+      });
+    }
+    
+    res.status(200).json({ 
+      status: 'healthy',
+      database: 'connected',
+      uptime: process.uptime(),
+      memory: process.memoryUsage(),
+      timestamp: new Date().toISOString()
+    });
   });
 });
 
