@@ -1,0 +1,30 @@
+# Development files
+manual query.sql
+delete_performance_tests.js
+update-user-role.sql
+*.md
+
+# Git files
+.git/
+.gitignore
+
+# IDE files
+.vscode/
+.cursor/
+*.swp
+*.swo
+
+# Logs and debug files
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# Test files
+test/
+tests/
+*.test.js
+*.spec.js
+
+# Documentation
+README.md
+docs/ 
