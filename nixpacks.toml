@@ -1,6 +1,6 @@
 [phases.build]
   cmds = [
-    "npm ci --omit=dev",
+    "npm install --production --no-cache",
     "npm rebuild sqlite3"
   ]
 
@@ -9,4 +9,4 @@
 
 [variables]
   NODE_ENV = "production"
-  NIXPACKS_METADATA = "node" 
+  NPM_CONFIG_CACHE = "/tmp/.npm" 
