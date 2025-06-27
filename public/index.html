@@ -358,89 +358,91 @@
         </div>
 
         <!-- Main Dashboard Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-          <!-- Days Trained Gauge -->
-          <div class="bg-gray-800 p-6 rounded-lg">
-            <h3 class="text-lg font-semibold mb-4 text-center"># DAYS TRAINED</h3>
-            <div class="relative">
-              <canvas id="daysTrainedChart" width="300" height="200"></canvas>
-              <div class="absolute inset-0 flex items-center justify-center">
-                <div class="text-center">
-                  <div class="text-4xl font-bold" id="daysTrainedValue">259</div>
-                  <div class="flex justify-between text-sm text-gray-400 mt-2 w-20">
-                    <span>0</span>
-                    <span id="maxDaysValue">12</span>
+        <div class="mx-4 my-8">
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Days Trained Gauge -->
+            <div class="bg-gray-800 p-6 rounded-lg shadow-lg mx-2 my-3">
+              <h3 class="text-lg font-semibold mb-4 text-center"># DAYS TRAINED</h3>
+              <div class="relative">
+                <canvas id="daysTrainedChart" width="280" height="180"></canvas>
+                <div class="absolute inset-0 flex items-center justify-center">
+                  <div class="text-center">
+                    <div class="text-3xl font-bold" id="daysTrainedValue">259</div>
+                    <div class="flex justify-between text-sm text-gray-400 mt-2 w-20">
+                      <span>0</span>
+                      <span id="maxDaysValue">12</span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- Monthly Training Hours Bar Chart -->
-          <div class="bg-gray-800 p-6 rounded-lg lg:col-span-2">
-            <div class="mb-4">
-              <h3 class="text-lg font-semibold mb-2">Training Minutes by Month</h3>
-              <p class="text-sm text-gray-400">
-                Bar chart showing number of days for each training duration range per month.
-              </p>
+            <!-- Monthly Training Hours Bar Chart -->
+            <div class="bg-gray-800 p-6 rounded-lg shadow-lg mx-2 my-3 lg:col-span-2">
+              <div class="mb-4">
+                <h3 class="text-lg font-semibold mb-2">Training Minutes by Month</h3>
+                <p class="text-sm text-gray-400">
+                  Bar chart showing number of days for each training duration range per month.
+                </p>
+              </div>
+              <div class="relative h-56">
+                <canvas id="monthlyTrainingChart"></canvas>
+              </div>
             </div>
-            <div class="relative h-64">
-              <canvas id="monthlyTrainingChart"></canvas>
-            </div>
-          </div>
 
-          <!-- Water Intake Gauge -->
-          <div class="bg-gray-800 p-6 rounded-lg">
-            <h3 class="text-lg font-semibold mb-4 text-center"># AVG water intake</h3>
-            <div class="relative">
-              <canvas id="waterIntakeChart" width="300" height="200"></canvas>
-              <div class="absolute inset-0 flex items-center justify-center">
-                <div class="text-center">
-                  <div class="text-4xl font-bold" id="waterIntakeValue">2.98</div>
-                  <div class="flex justify-between text-sm text-gray-400 mt-2 w-20">
-                    <span>0</span>
-                    <span>3</span>
+            <!-- Water Intake Gauge -->
+            <div class="bg-gray-800 p-6 rounded-lg shadow-lg mx-2 my-3">
+              <h3 class="text-lg font-semibold mb-4 text-center"># AVG water intake</h3>
+              <div class="relative">
+                <canvas id="waterIntakeChart" width="280" height="180"></canvas>
+                <div class="absolute inset-0 flex items-center justify-center">
+                  <div class="text-center">
+                    <div class="text-3xl font-bold" id="waterIntakeValue">2.98</div>
+                    <div class="flex justify-between text-sm text-gray-400 mt-2 w-20">
+                      <span>0</span>
+                      <span>3</span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- Hunger Level Stacked Bar Chart -->
-          <div class="bg-gray-800 p-6 rounded-lg lg:col-span-2">
-            <h3 class="text-lg font-semibold mb-4">Hunger Level</h3>
-            <div class="relative h-64">
-              <canvas id="hungerLevelChart"></canvas>
+            <!-- Hunger Level Stacked Bar Chart -->
+            <div class="bg-gray-800 p-6 rounded-lg shadow-lg mx-2 my-3 lg:col-span-2">
+              <h3 class="text-lg font-semibold mb-4">Hunger Level</h3>
+              <div class="relative h-56">
+                <canvas id="hungerLevelChart"></canvas>
+              </div>
             </div>
-          </div>
 
-          <!-- Sleep Hours Bar Chart -->
-          <div class="bg-gray-800 p-6 rounded-lg lg:col-span-2">
-            <div class="mb-4">
-              <h3 class="text-lg font-semibold mb-2" id="sleepHoursTitle">Sleep Hours Distribution</h3>
-              <p class="text-sm text-gray-400" id="sleepHoursSubtitle">
-                Bar chart showing number of entries for each sleep duration
-              </p>
+            <!-- Sleep Hours Bar Chart -->
+            <div class="bg-gray-800 p-6 rounded-lg shadow-lg mx-2 my-3 lg:col-span-2">
+              <div class="mb-4">
+                <h3 class="text-lg font-semibold mb-2" id="sleepHoursTitle">Sleep Hours Distribution</h3>
+                <p class="text-sm text-gray-400" id="sleepHoursSubtitle">
+                  Bar chart showing number of entries for each sleep duration
+                </p>
+              </div>
+              <div class="relative h-56">
+                <canvas id="sleepHoursChart"></canvas>
+              </div>
             </div>
-            <div class="relative h-64">
-              <canvas id="sleepHoursChart"></canvas>
-            </div>
-          </div>
 
-          <!-- Sleep Quality Chart -->
-          <div class="bg-gray-800 p-6 rounded-lg">
-            <div class="mb-4">
-              <h3 class="text-lg font-semibold mb-2">Sleep Quality by Month</h3>
-              <p class="text-sm text-gray-400">
-                Bar chart showing number of days for each sleep quality category per month.
-              </p>
+            <!-- Sleep Quality Chart -->
+            <div class="bg-gray-800 p-6 rounded-lg shadow-lg mx-2 my-3">
+              <div class="mb-4">
+                <h3 class="text-lg font-semibold mb-2">Sleep Quality by Month</h3>
+                <p class="text-sm text-gray-400">
+                  Bar chart showing number of days for each sleep quality category per month.
+                </p>
+              </div>
+              <div class="relative h-56">
+                <canvas id="sleepQualityChart"></canvas>
+              </div>
             </div>
-            <div class="relative h-64">
-              <canvas id="sleepQualityChart"></canvas>
-            </div>
-          </div>
 
+          </div>
         </div>
 
 
