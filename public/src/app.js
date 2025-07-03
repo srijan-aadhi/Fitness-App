@@ -985,7 +985,11 @@ function getSelectedMonths() {
 function updateSelectedCount() {
   const countElement = document.getElementById('selectedCount');
   if (countElement) {
-    countElement.textContent = `(${selectedMonthsArray.length} selected)`;
+    const newText = `(${selectedMonthsArray.length} selected)`;
+    countElement.textContent = newText;
+    console.log('Updated count display to:', newText);
+  } else {
+    console.error('selectedCount element not found!');
   }
 }
 
@@ -993,10 +997,11 @@ function updateSelectedCount() {
 function updateDropdownOptions() {
   const dropdown = document.getElementById('monthDropdown');
   if (!dropdown) {
-    console.warn('Dropdown not found, retrying in 100ms...');
-    setTimeout(updateDropdownOptions, 100);
+    console.error('monthDropdown element not found!');
     return;
   }
+  
+  console.log('Updating dropdown options, currently selected:', selectedMonthsArray);
   
   // Store current selection
   const currentValue = dropdown.value;
@@ -1039,16 +1044,19 @@ function updateDropdownOptions() {
   if (currentValue && !selectedMonthsArray.includes(currentValue)) {
     dropdown.value = currentValue;
   }
+  
+  console.log('Dropdown updated, available options:', dropdown.options.length);
 }
 
 // Update the selected months list display
 function updateSelectedMonthsList() {
   const listContainer = document.getElementById('selectedMonthsList');
   if (!listContainer) {
-    console.warn('List container not found, retrying in 100ms...');
-    setTimeout(updateSelectedMonthsList, 100);
+    console.error('selectedMonthsList element not found!');
     return;
   }
+  
+  console.log('Updating list with selected months:', selectedMonthsArray);
   
   if (selectedMonthsArray.length === 0) {
     listContainer.innerHTML = '<p class="text-xs text-gray-400 italic">No time periods selected yet...</p>';
@@ -1059,6 +1067,7 @@ function updateSelectedMonthsList() {
   const listItems = selectedMonthsArray.map(monthValue => {
     const month = allMonths.find(m => m.value === monthValue);
     if (!month) {
+      console.error('Month not found for value:', monthValue);
       return '';
     }
     
@@ -1070,20 +1079,29 @@ function updateSelectedMonthsList() {
         </button>
       </div>
     `;
-  }).join('');
+  }).filter(item => item !== '').join('');
   
   listContainer.innerHTML = listItems;
+  console.log('List updated with HTML:', listContainer.innerHTML);
 }
 
 // Add a month to selected list
 function addSelectedMonth(monthValue) {
+  console.log('addSelectedMonth called with value:', monthValue);
+  console.log('Current selected months before adding:', selectedMonthsArray);
+  
   if (monthValue && !selectedMonthsArray.includes(monthValue)) {
     selectedMonthsArray.push(monthValue);
     window.selectedMonthsArray = selectedMonthsArray; // Keep window reference updated
+    
+    console.log('Added month. New selected months:', selectedMonthsArray);
+    
     updateSelectedCount();
     updateSelectedMonthsList();
     updateDropdownOptions();
     loadDashboard();
+  } else {
+    console.log('Month not added - either empty or already selected');
   }
 }
 
@@ -1106,6 +1124,7 @@ window.testDropdownFunctionality = function() {
   
   if (dropdown) {
     console.log('Dropdown options count:', dropdown.options.length);
+    console.log('Dropdown value:', dropdown.value);
   }
   
   if (listContainer) {
@@ -1117,6 +1136,24 @@ window.testDropdownFunctionality = function() {
   }
   
   console.log('=== End Test ===');
+};
+
+// Manual test function to add a month
+window.testAddMonth = function(monthValue = 'Dec-24') {
+  console.log('=== Manual Add Month Test ===');
+  console.log('Adding month:', monthValue);
+  addSelectedMonth(monthValue);
+  console.log('=== End Manual Test ===');
+};
+
+// Manual test function to force update displays
+window.forceUpdateDisplays = function() {
+  console.log('=== Force Update Displays ===');
+  console.log('Current selected months:', selectedMonthsArray);
+  updateSelectedCount();
+  updateSelectedMonthsList();
+  updateDropdownOptions();
+  console.log('=== End Force Update ===');
 };
 
 // Remove a month from selected list - make it global
@@ -1150,24 +1187,38 @@ function setupDashboardFilters() {
   
   // Add listener for month dropdown
   if (monthDropdown) {
+    console.log('Setting up dropdown change listener');
     monthDropdown.addEventListener('change', (e) => {
+      console.log('Dropdown change event fired, value:', e.target.value);
       if (e.target.value) {
+        console.log('Adding selected month:', e.target.value);
         addSelectedMonth(e.target.value);
         // Reset dropdown to placeholder
         e.target.value = '';
+        console.log('Dropdown reset to empty value');
       }
     });
+  } else {
+    console.error('monthDropdown not found during event listener setup');
   }
   
   // Select All button
   if (selectAllBtn) {
     selectAllBtn.addEventListener('click', () => {
+      console.log('Select All button clicked');
+      console.log('Before Select All - selected months:', selectedMonthsArray);
+      
       // Add all available months
       allMonths.forEach(month => {
         if (!selectedMonthsArray.includes(month.value)) {
           selectedMonthsArray.push(month.value);
         }
       });
+      
+      window.selectedMonthsArray = selectedMonthsArray; // Update window reference
+      
+      console.log('After Select All - selected months:', selectedMonthsArray);
+      
       updateSelectedCount();
       updateSelectedMonthsList();
       updateDropdownOptions();
@@ -1187,17 +1238,45 @@ function setupDashboardFilters() {
   }
   
   // Initialize the interface with default selection
+  console.log('Setting up dashboard filters...');
+  
   // Add Jun-25 as default selection (like the original had checked)
   if (selectedMonthsArray.length === 0) {
     selectedMonthsArray.push('Jun-25');
+    window.selectedMonthsArray = selectedMonthsArray; // Update window reference
+    console.log('Added default selection Jun-25:', selectedMonthsArray);
   }
   
-  // Use setTimeout to ensure DOM elements are ready
-  setTimeout(() => {
-    updateSelectedCount();
-    updateSelectedMonthsList();
-    updateDropdownOptions();
-  }, 100);
+  // Force immediate update without delay
+  console.log('Running immediate initialization...');
+  console.log('Selected months at initialization:', selectedMonthsArray);
+  
+  // Try to update immediately
+  const immediateUpdate = () => {
+    const dropdown = document.getElementById('monthDropdown');
+    const listContainer = document.getElementById('selectedMonthsList');
+    const countElement = document.getElementById('selectedCount');
+    
+    if (dropdown && listContainer && countElement) {
+      console.log('All elements found, updating immediately');
+      updateSelectedCount();
+      updateSelectedMonthsList();
+      updateDropdownOptions();
+      console.log('Immediate initialization complete');
+      return true;
+    }
+    return false;
+  };
+  
+  // Try immediate update first
+  if (!immediateUpdate()) {
+    console.log('Elements not ready, using timeout...');
+    setTimeout(() => {
+      if (!immediateUpdate()) {
+        console.error('Elements still not found after timeout!');
+      }
+    }, 100);
+  }
 }
 
 // Debounce function for input filtering
