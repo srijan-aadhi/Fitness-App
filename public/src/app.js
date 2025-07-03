@@ -949,6 +949,9 @@ function createSleepQualityChart(data) {
 // Array to store selected months
 let selectedMonthsArray = [];
 
+// Make functions globally accessible immediately
+window.selectedMonthsArray = selectedMonthsArray;
+
 // All available months for the dropdown
 const allMonths = [
   {value: 'Jun-25', label: 'June 2025'},
@@ -989,7 +992,11 @@ function updateSelectedCount() {
 // Update the dropdown options to hide selected items
 function updateDropdownOptions() {
   const dropdown = document.getElementById('monthDropdown');
-  if (!dropdown) return;
+  if (!dropdown) {
+    console.warn('Dropdown not found, retrying in 100ms...');
+    setTimeout(updateDropdownOptions, 100);
+    return;
+  }
   
   // Store current selection
   const currentValue = dropdown.value;
@@ -1037,7 +1044,11 @@ function updateDropdownOptions() {
 // Update the selected months list display
 function updateSelectedMonthsList() {
   const listContainer = document.getElementById('selectedMonthsList');
-  if (!listContainer) return;
+  if (!listContainer) {
+    console.warn('List container not found, retrying in 100ms...');
+    setTimeout(updateSelectedMonthsList, 100);
+    return;
+  }
   
   if (selectedMonthsArray.length === 0) {
     listContainer.innerHTML = '<p class="text-xs text-gray-400 italic">No time periods selected yet...</p>';
@@ -1047,12 +1058,14 @@ function updateSelectedMonthsList() {
   // Create list of selected items with remove buttons
   const listItems = selectedMonthsArray.map(monthValue => {
     const month = allMonths.find(m => m.value === monthValue);
-    if (!month) return '';
+    if (!month) {
+      return '';
+    }
     
     return `
       <div class="flex items-center justify-between bg-blue-600 text-white px-2 py-1 rounded mb-1 text-xs">
         <span>${month.label}</span>
-        <button onclick="removeSelectedMonth('${monthValue}')" class="ml-2 text-blue-200 hover:text-white transition-colors">
+        <button onclick="window.removeSelectedMonth('${monthValue}')" class="ml-2 text-blue-200 hover:text-white transition-colors">
           <i class="fas fa-times"></i>
         </button>
       </div>
@@ -1066,6 +1079,7 @@ function updateSelectedMonthsList() {
 function addSelectedMonth(monthValue) {
   if (monthValue && !selectedMonthsArray.includes(monthValue)) {
     selectedMonthsArray.push(monthValue);
+    window.selectedMonthsArray = selectedMonthsArray; // Keep window reference updated
     updateSelectedCount();
     updateSelectedMonthsList();
     updateDropdownOptions();
@@ -1073,11 +1087,44 @@ function addSelectedMonth(monthValue) {
   }
 }
 
-// Remove a month from selected list
-function removeSelectedMonth(monthValue) {
+// Make function globally accessible
+window.addSelectedMonth = addSelectedMonth;
+
+// Test function to verify dropdown functionality
+window.testDropdownFunctionality = function() {
+  console.log('=== Dropdown Functionality Test ===');
+  console.log('Selected months array:', selectedMonthsArray);
+  console.log('Window selected months:', window.selectedMonthsArray);
+  
+  const dropdown = document.getElementById('monthDropdown');
+  const listContainer = document.getElementById('selectedMonthsList');
+  const countElement = document.getElementById('selectedCount');
+  
+  console.log('Dropdown element:', dropdown ? 'Found' : 'NOT FOUND');
+  console.log('List container element:', listContainer ? 'Found' : 'NOT FOUND');
+  console.log('Count element:', countElement ? 'Found' : 'NOT FOUND');
+  
+  if (dropdown) {
+    console.log('Dropdown options count:', dropdown.options.length);
+  }
+  
+  if (listContainer) {
+    console.log('List container content:', listContainer.innerHTML);
+  }
+  
+  if (countElement) {
+    console.log('Count display:', countElement.textContent);
+  }
+  
+  console.log('=== End Test ===');
+};
+
+// Remove a month from selected list - make it global
+window.removeSelectedMonth = function(monthValue) {
   const index = selectedMonthsArray.indexOf(monthValue);
   if (index > -1) {
     selectedMonthsArray.splice(index, 1);
+    window.selectedMonthsArray = selectedMonthsArray; // Keep window reference updated
     updateSelectedCount();
     updateSelectedMonthsList();
     updateDropdownOptions();
@@ -1144,9 +1191,13 @@ function setupDashboardFilters() {
   if (selectedMonthsArray.length === 0) {
     selectedMonthsArray.push('Jun-25');
   }
-  updateSelectedCount();
-  updateSelectedMonthsList();
-  updateDropdownOptions();
+  
+  // Use setTimeout to ensure DOM elements are ready
+  setTimeout(() => {
+    updateSelectedCount();
+    updateSelectedMonthsList();
+    updateDropdownOptions();
+  }, 100);
 }
 
 // Debounce function for input filtering
@@ -1168,7 +1219,7 @@ async function init() {
   await fetchUserProfile(); // Get user role information
   await loadAthletes(); // Load athletes for selection
   
-  // Setup dashboard filters
+  // Setup dashboard filters and initialize default selection
   setupDashboardFilters();
   
   // Default to dashboard, unless entry is specifically requested
@@ -1178,10 +1229,26 @@ async function init() {
     // Default to dashboard on page load/reload
     show('dashboard');
     window.location.hash = '#dashboard'; // Update URL to reflect current view
-    // Load dashboard after a short delay to ensure DOM is ready
+    // Load dashboard after a short delay to ensure DOM is ready and filters are set
     setTimeout(() => {
-      loadDashboard();
-    }, 100);
+      // Ensure we have the dropdown elements before loading dashboard
+      const dropdown = document.getElementById('monthDropdown');
+      const listContainer = document.getElementById('selectedMonthsList');
+      
+      if (dropdown && listContainer) {
+        // Only load dashboard if we have selected months
+        if (selectedMonthsArray.length > 0) {
+          loadDashboard();
+        }
+      } else {
+        // Retry initialization if elements aren't ready
+        setTimeout(() => {
+          if (selectedMonthsArray.length > 0) {
+            loadDashboard();
+          }
+        }, 300);
+      }
+    }, 200);
   }
 }
 
@@ -1194,5 +1261,10 @@ window.addEventListener('hashchange', function() {
   }
 });
 
-// Start the application
-init();
+// Start the application after DOM is loaded
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  // DOM is already loaded
+  init();
+}
