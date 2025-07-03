@@ -368,9 +368,8 @@ async function loadDashboard() {
     const membershipId = membershipFilter?.value || '';
     const monthWise = monthWiseFilter?.checked || false;
     
-    // Get selected months from checkboxes
-    const selectedMonths = Array.from(document.querySelectorAll('.month-checkbox:checked'))
-      .map(checkbox => checkbox.value);
+    // Get selected months from the selected list
+    const selectedMonths = getSelectedMonths();
     
     console.log('Selected months:', selectedMonths);
 
@@ -947,12 +946,142 @@ function createSleepQualityChart(data) {
   });
 }
 
+// Array to store selected months
+let selectedMonthsArray = [];
+
+// All available months for the dropdown
+const allMonths = [
+  {value: 'Jun-25', label: 'June 2025'},
+  {value: 'May-25', label: 'May 2025'},
+  {value: 'Apr-25', label: 'April 2025'},
+  {value: 'Mar-25', label: 'March 2025'},
+  {value: 'Feb-25', label: 'February 2025'},
+  {value: 'Jan-25', label: 'January 2025'},
+  {value: 'Dec-24', label: 'December 2024'},
+  {value: 'Nov-24', label: 'November 2024'},
+  {value: 'Oct-24', label: 'October 2024'},
+  {value: 'Sep-24', label: 'September 2024'},
+  {value: 'Aug-24', label: 'August 2024'},
+  {value: 'Jul-24', label: 'July 2024'},
+  {value: 'Jun-24', label: 'June 2024'},
+  {value: 'May-24', label: 'May 2024'},
+  {value: 'Apr-24', label: 'April 2024'},
+  {value: 'Mar-24', label: 'March 2024'},
+  {value: 'Feb-24', label: 'February 2024'},
+  {value: 'Jan-24', label: 'January 2024'},
+  {value: 'Dec-23', label: 'December 2023'},
+  {value: 'Nov-23', label: 'November 2023'}
+];
+
+// Get selected months array
+function getSelectedMonths() {
+  return selectedMonthsArray;
+}
+
 // Update selected months count display
 function updateSelectedCount() {
-  const selectedCount = document.querySelectorAll('.month-checkbox:checked').length;
   const countElement = document.getElementById('selectedCount');
   if (countElement) {
-    countElement.textContent = `(${selectedCount} selected)`;
+    countElement.textContent = `(${selectedMonthsArray.length} selected)`;
+  }
+}
+
+// Update the dropdown options to hide selected items
+function updateDropdownOptions() {
+  const dropdown = document.getElementById('monthDropdown');
+  if (!dropdown) return;
+  
+  // Store current selection
+  const currentValue = dropdown.value;
+  
+  // Clear dropdown
+  dropdown.innerHTML = '<option value="">Select a time period...</option>';
+  
+  // Group months by year
+  const years = {'2025': [], '2024': [], '2023': []};
+  
+  allMonths.forEach(month => {
+    // Only add if not already selected
+    if (!selectedMonthsArray.includes(month.value)) {
+      const year = month.value.split('-')[1];
+      const fullYear = year.length === 2 ? `20${year}` : year;
+      if (years[fullYear]) {
+        years[fullYear].push(month);
+      }
+    }
+  });
+  
+  // Add optgroups and options
+  Object.keys(years).forEach(year => {
+    if (years[year].length > 0) {
+      const optgroup = document.createElement('optgroup');
+      optgroup.label = year;
+      
+      years[year].forEach(month => {
+        const option = document.createElement('option');
+        option.value = month.value;
+        option.textContent = month.label;
+        optgroup.appendChild(option);
+      });
+      
+      dropdown.appendChild(optgroup);
+    }
+  });
+  
+  // Restore selection if it's still available
+  if (currentValue && !selectedMonthsArray.includes(currentValue)) {
+    dropdown.value = currentValue;
+  }
+}
+
+// Update the selected months list display
+function updateSelectedMonthsList() {
+  const listContainer = document.getElementById('selectedMonthsList');
+  if (!listContainer) return;
+  
+  if (selectedMonthsArray.length === 0) {
+    listContainer.innerHTML = '<p class="text-xs text-gray-400 italic">No time periods selected yet...</p>';
+    return;
+  }
+  
+  // Create list of selected items with remove buttons
+  const listItems = selectedMonthsArray.map(monthValue => {
+    const month = allMonths.find(m => m.value === monthValue);
+    if (!month) return '';
+    
+    return `
+      <div class="flex items-center justify-between bg-blue-600 text-white px-2 py-1 rounded mb-1 text-xs">
+        <span>${month.label}</span>
+        <button onclick="removeSelectedMonth('${monthValue}')" class="ml-2 text-blue-200 hover:text-white transition-colors">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    `;
+  }).join('');
+  
+  listContainer.innerHTML = listItems;
+}
+
+// Add a month to selected list
+function addSelectedMonth(monthValue) {
+  if (monthValue && !selectedMonthsArray.includes(monthValue)) {
+    selectedMonthsArray.push(monthValue);
+    updateSelectedCount();
+    updateSelectedMonthsList();
+    updateDropdownOptions();
+    loadDashboard();
+  }
+}
+
+// Remove a month from selected list
+function removeSelectedMonth(monthValue) {
+  const index = selectedMonthsArray.indexOf(monthValue);
+  if (index > -1) {
+    selectedMonthsArray.splice(index, 1);
+    updateSelectedCount();
+    updateSelectedMonthsList();
+    updateDropdownOptions();
+    loadDashboard();
   }
 }
 
@@ -960,6 +1089,7 @@ function updateSelectedCount() {
 function setupDashboardFilters() {
   const membershipFilter = document.getElementById('membershipFilter');
   const monthWiseFilter = document.getElementById('monthWiseFilter');
+  const monthDropdown = document.getElementById('monthDropdown');
   const selectAllBtn = document.getElementById('selectAllMonths');
   const clearAllBtn = document.getElementById('clearAllMonths');
 
@@ -971,21 +1101,29 @@ function setupDashboardFilters() {
     monthWiseFilter.addEventListener('change', loadDashboard);
   }
   
-  // Add listeners for all month checkboxes
-  document.querySelectorAll('.month-checkbox').forEach(checkbox => {
-    checkbox.addEventListener('change', () => {
-      updateSelectedCount();
-      loadDashboard();
+  // Add listener for month dropdown
+  if (monthDropdown) {
+    monthDropdown.addEventListener('change', (e) => {
+      if (e.target.value) {
+        addSelectedMonth(e.target.value);
+        // Reset dropdown to placeholder
+        e.target.value = '';
+      }
     });
-  });
+  }
   
   // Select All button
   if (selectAllBtn) {
     selectAllBtn.addEventListener('click', () => {
-      document.querySelectorAll('.month-checkbox').forEach(checkbox => {
-        checkbox.checked = true;
+      // Add all available months
+      allMonths.forEach(month => {
+        if (!selectedMonthsArray.includes(month.value)) {
+          selectedMonthsArray.push(month.value);
+        }
       });
       updateSelectedCount();
+      updateSelectedMonthsList();
+      updateDropdownOptions();
       loadDashboard();
     });
   }
@@ -993,16 +1131,22 @@ function setupDashboardFilters() {
   // Clear All button
   if (clearAllBtn) {
     clearAllBtn.addEventListener('click', () => {
-      document.querySelectorAll('.month-checkbox').forEach(checkbox => {
-        checkbox.checked = false;
-      });
+      selectedMonthsArray = [];
       updateSelectedCount();
+      updateSelectedMonthsList();
+      updateDropdownOptions();
       loadDashboard();
     });
   }
   
-  // Initialize count on page load
+  // Initialize the interface with default selection
+  // Add Jun-25 as default selection (like the original had checked)
+  if (selectedMonthsArray.length === 0) {
+    selectedMonthsArray.push('Jun-25');
+  }
   updateSelectedCount();
+  updateSelectedMonthsList();
+  updateDropdownOptions();
 }
 
 // Debounce function for input filtering

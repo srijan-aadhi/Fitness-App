@@ -25,6 +25,8 @@ database/*.db
 # Development files
 manual query.sql
 sqlite-tools/
+query_users.js
+simple_query.js
 
 
 # OS generated files

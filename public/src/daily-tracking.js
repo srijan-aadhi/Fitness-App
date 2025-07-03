@@ -642,7 +642,7 @@ async function checkUserRole() {
   const membershipIdContainer = membershipIdField?.parentElement;
   
   if (userRole === 'Athlete') {
-    // For athletes, auto-fill their membership ID and hide the field
+    // For athletes, auto-fill their membership ID and make it read-only (but visible)
     try {
       const res = await fetch('https://fitness-app-production-b5bb.up.railway.app/api/auth/profile', {
         headers: { Authorization: `Bearer ${token}` }
@@ -651,24 +651,52 @@ async function checkUserRole() {
       if (res.ok) {
         const userData = await res.json();
         if (membershipIdField) {
-          membershipIdField.value = userData.membership_id || '';
+          membershipIdField.value = userData.membership_id || 'Not assigned';
           membershipIdField.readOnly = true;
           membershipIdField.className = 'w-full p-4 border border-gray-300 rounded-xl bg-gray-100 text-gray-600 cursor-not-allowed';
         }
         
-        // Hide the entire membership ID container for athletes
-        if (membershipIdContainer) {
-          membershipIdContainer.style.display = 'none';
+        // Update the label to show this is their membership ID
+        const label = membershipIdContainer?.querySelector('label');
+        if (label) {
+          label.innerHTML = '<i class="fas fa-id-card mr-2"></i>Your Membership ID';
+        }
+        
+        // Update the helper text
+        const helpText = membershipIdContainer?.querySelector('p');
+        if (helpText) {
+          helpText.textContent = 'This is your unique membership ID - it cannot be changed';
+          helpText.className = 'text-sm text-blue-600 mt-2';
         }
       }
     } catch (err) {
       console.error('Failed to fetch user profile for membership ID:', err);
+      // Fallback if API call fails
+      if (membershipIdField) {
+        membershipIdField.value = 'Unable to load';
+        membershipIdField.readOnly = true;
+        membershipIdField.className = 'w-full p-4 border border-gray-300 rounded-xl bg-gray-100 text-gray-600 cursor-not-allowed';
+      }
     }
   } else {
-    // For other roles, keep the field visible and editable
+    // For other roles (Trainers/Admins), keep the field visible and editable
     if (membershipIdField) {
       membershipIdField.readOnly = false;
       membershipIdField.placeholder = 'Enter membership ID for the user';
+      membershipIdField.className = 'w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all';
+    }
+    
+    // Update label for non-athletes
+    const label = membershipIdContainer?.querySelector('label');
+    if (label) {
+      label.innerHTML = '<i class="fas fa-id-card mr-2"></i>Membership ID *';
+    }
+    
+    // Update helper text for non-athletes
+    const helpText = membershipIdContainer?.querySelector('p');
+    if (helpText) {
+      helpText.textContent = 'Enter the membership ID for the person you are tracking';
+      helpText.className = 'text-sm text-gray-500 mt-2';
     }
   }
 }
