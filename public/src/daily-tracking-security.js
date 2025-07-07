@@ -12,12 +12,19 @@ let userRole = localStorage.getItem('userRole') || 'Athlete';
 // Configuration for API endpoints
 const API_BASE_URL = 'https://fitness-app-production-b5bb.up.railway.app';
 
-// Fetch user profile to get role information
+// Fetch user profile to get role information with timeout
 async function fetchUserProfile() {
   try {
+    // Add timeout to prevent hanging
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+    
     const res = await fetch(`${API_BASE_URL}/api/auth/profile`, {
-      headers: { Authorization: `Bearer ${token}` }
+      headers: { Authorization: `Bearer ${token}` },
+      signal: controller.signal
     });
+    
+    clearTimeout(timeoutId);
     
     if (res.ok) {
       const userData = await res.json();
@@ -39,6 +46,14 @@ async function fetchUserProfile() {
 
 // Update UI elements based on user role
 function updateUIForRole() {
+  // Always hide loading overlay first
+  const hideLoadingOverlay = () => {
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    if (loadingOverlay) {
+      loadingOverlay.classList.add('hidden');
+    }
+  };
+  
   // Add role indicator to the page
   const roleIndicator = document.createElement('div');
   roleIndicator.id = 'roleIndicator';
@@ -67,13 +82,6 @@ function updateUIForRole() {
     hasAccess = false;
   }
   
-  // If user doesn't have access, redirect them
-  if (!hasAccess) {
-    alert('Access denied. Only Athletes and Super Admins can access daily tracking.');
-    window.location.href = '/index.html';
-    return;
-  }
-  
   // For Super Admins, show assessment form navigation buttons
   if (isSuperAdmin) {
     const navFormButtons = document.querySelectorAll('.nav-form-btn');
@@ -82,13 +90,17 @@ function updateUIForRole() {
     });
   }
   
-  // Hide loading overlay after role-based UI is set up
-  setTimeout(() => {
-    const loadingOverlay = document.getElementById('loadingOverlay');
-    if (loadingOverlay) {
-      loadingOverlay.classList.add('hidden');
-    }
-  }, 500); // Small delay to ensure smooth loading experience
+  // Hide loading overlay before any action
+  hideLoadingOverlay();
+  
+  // If user doesn't have access, redirect them after hiding overlay
+  if (!hasAccess) {
+    setTimeout(() => {
+      alert('Access denied. Only Athletes and Super Admins can access daily tracking.');
+      window.location.href = '/index.html';
+    }, 100);
+    return;
+  }
 }
 
 // Logout function
@@ -100,7 +112,27 @@ function logout() {
 
 // Initialize security check
 async function initSecurity() {
-  await fetchUserProfile();
+  // Fallback mechanism: Always hide loading overlay after 8 seconds max
+  const fallbackTimeout = setTimeout(() => {
+    console.warn('Security check taking too long, hiding loading overlay');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    if (loadingOverlay) {
+      loadingOverlay.classList.add('hidden');
+    }
+  }, 8000);
+  
+  try {
+    await fetchUserProfile();
+    clearTimeout(fallbackTimeout);
+  } catch (err) {
+    console.error('Security initialization failed:', err);
+    clearTimeout(fallbackTimeout);
+    // Force hide overlay and show UI
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    if (loadingOverlay) {
+      loadingOverlay.classList.add('hidden');
+    }
+  }
 }
 
 // Start the security check after DOM is loaded

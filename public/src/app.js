@@ -81,12 +81,19 @@ function canCreateAthletes() {
 // Configuration for API endpoints
 const API_BASE_URL = 'https://fitness-app-production-b5bb.up.railway.app';
 
-// Fetch user profile to get role information
+// Fetch user profile to get role information with timeout
 async function fetchUserProfile() {
   try {
+    // Add timeout to prevent hanging
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+    
     const res = await fetch(`${API_BASE_URL}/api/auth/profile`, {
-      headers: { Authorization: `Bearer ${token}` }
+      headers: { Authorization: `Bearer ${token}` },
+      signal: controller.signal
     });
+    
+    clearTimeout(timeoutId);
     
     if (res.ok) {
       const userData = await res.json();
@@ -191,12 +198,10 @@ function updateUIForRole() {
   updateMembershipFilter();
   
   // Hide loading overlay after role-based UI is set up
-  setTimeout(() => {
-    const loadingOverlay = document.getElementById('loadingOverlay');
-    if (loadingOverlay) {
-      loadingOverlay.classList.add('hidden');
-    }
-  }, 500); // Small delay to ensure smooth loading experience
+  const loadingOverlay = document.getElementById('loadingOverlay');
+  if (loadingOverlay) {
+    loadingOverlay.classList.add('hidden');
+  }
 }
 
 // Update membership filter based on user role
@@ -1330,9 +1335,29 @@ function debounce(func, wait) {
 
 // Initialize the app
 async function init() {
-  resetSession();
-  await fetchUserProfile(); // Get user role information
-  await loadAthletes(); // Load athletes for selection
+  // Fallback mechanism: Always hide loading overlay after 8 seconds max
+  const fallbackTimeout = setTimeout(() => {
+    console.warn('App initialization taking too long, hiding loading overlay');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    if (loadingOverlay) {
+      loadingOverlay.classList.add('hidden');
+    }
+  }, 8000);
+  
+  try {
+    resetSession();
+    await fetchUserProfile(); // Get user role information
+    await loadAthletes(); // Load athletes for selection
+    clearTimeout(fallbackTimeout);
+  } catch (err) {
+    console.error('App initialization failed:', err);
+    clearTimeout(fallbackTimeout);
+    // Force hide overlay
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    if (loadingOverlay) {
+      loadingOverlay.classList.add('hidden');
+    }
+  }
   
   // Setup dashboard filters and initialize default selection
   setupDashboardFilters();
