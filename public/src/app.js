@@ -95,9 +95,14 @@ async function fetchUserProfile() {
       
       // Update UI based on role
       updateUIForRole();
+    } else {
+      // If profile fetch fails, fallback to stored role and show UI
+      updateUIForRole();
     }
   } catch (err) {
     console.error('Failed to fetch user profile:', err);
+    // Fallback to stored role and show UI even if fetch fails
+    updateUIForRole();
   }
 }
 
@@ -115,22 +120,23 @@ function updateUIForRole() {
   
   document.body.appendChild(roleIndicator);
   
-  // Show injury reports button for trainers (Tester role and above)
-  const injuryReportsBtn = document.getElementById('injuryReportsBtn');
-  if (injuryReportsBtn && (userRole === 'Tester' || userRole === 'Admin' || userRole === 'Super Admin')) {
-    injuryReportsBtn.style.display = 'block';
-  }
-  
   // Role-based UI control logic
   const isAthlete = userRole === 'Athlete';
   const isTrainer = userRole === 'Tester' || userRole === 'Admin';
   const isSuperAdmin = userRole === 'Super Admin';
   
+  // First, authorize basic navigation elements that everyone can see
+  const basicNavItems = document.querySelectorAll('.nav-item[onclick="show(\'dashboard\')"]');
+  basicNavItems.forEach(btn => {
+    if (btn) btn.classList.add('role-authorized');
+  });
+  
+  // Role-specific authorization
   if (isAthlete) {
-    // Hide all assessment form buttons for Athletes (both navbar and hero section)
-    const allAssessmentButtons = document.querySelectorAll('button[onclick*="strength-form.html"], button[onclick*="speed-form.html"], button[onclick*="agility-form.html"]');
-    allAssessmentButtons.forEach(btn => {
-      if (btn) btn.style.display = 'none';
+    // Athletes can see injury form
+    const injuryFormButtons = document.querySelectorAll('.nav-item[onclick="show(\'entry\')"], .hero-assessment-btn[onclick="show(\'entry\')"], button[onclick="show(\'entry\')"]');
+    injuryFormButtons.forEach(btn => {
+      if (btn) btn.classList.add('role-authorized');
     });
     
     // Hide Individual Results Filter for Athletes
@@ -144,28 +150,32 @@ function updateUIForRole() {
   }
   
   if (isTrainer) {
-    // Hide Daily Tracking button for Trainers (but NOT Super Admin)
-    const dailyTrackingBtn = document.querySelector('button[onclick="window.location.href=\'daily-tracking.html\'"]');
-    if (dailyTrackingBtn) {
-      dailyTrackingBtn.style.display = 'none';
-    }
-    
-    // Hide all Injury Form buttons for Trainers (but NOT Super Admin)
-    const allInjuryFormButtons = document.querySelectorAll('button[onclick="show(\'entry\')"]');
-    allInjuryFormButtons.forEach(btn => {
-      if (btn && (btn.textContent.includes('Injury Form') || btn.textContent.includes('Submit Injury Form'))) {
-        btn.style.display = 'none';
-      }
+    // Trainers can see assessment forms but NOT injury forms or daily tracking
+    const assessmentButtons = document.querySelectorAll('.nav-item[onclick*="strength-form.html"], .nav-item[onclick*="speed-form.html"], .nav-item[onclick*="agility-form.html"], .hero-assessment-btn[onclick*="strength-form.html"], .hero-assessment-btn[onclick*="speed-form.html"], .hero-assessment-btn[onclick*="agility-form.html"]');
+    assessmentButtons.forEach(btn => {
+      if (btn) btn.classList.add('role-authorized');
     });
+    
+    // Show injury reports button for trainers
+    const injuryReportsBtn = document.getElementById('injuryReportsBtn');
+    if (injuryReportsBtn) {
+      injuryReportsBtn.style.display = 'block';
+    }
   }
   
   // Super Admin gets access to ALL forms - no restrictions
   if (isSuperAdmin) {
-    // Ensure all buttons are visible for Super Admin
-    const allButtons = document.querySelectorAll('button[onclick*="strength-form.html"], button[onclick*="speed-form.html"], button[onclick*="agility-form.html"], button[onclick="window.location.href=\'daily-tracking.html\'"], button[onclick="show(\'entry\')"]');
-    allButtons.forEach(btn => {
-      if (btn) btn.style.display = '';
+    // Authorize all navigation elements
+    const allNavItems = document.querySelectorAll('.nav-item, .hero-assessment-btn');
+    allNavItems.forEach(btn => {
+      if (btn) btn.classList.add('role-authorized');
     });
+    
+    // Show injury reports button for Super Admin
+    const injuryReportsBtn = document.getElementById('injuryReportsBtn');
+    if (injuryReportsBtn) {
+      injuryReportsBtn.style.display = 'block';
+    }
     
     // Ensure Individual Results Filter is visible for Super Admin
     const allFilterContainers = document.querySelectorAll('.bg-gray-800');
@@ -179,6 +189,14 @@ function updateUIForRole() {
   
   // Update membership filter based on role
   updateMembershipFilter();
+  
+  // Hide loading overlay after role-based UI is set up
+  setTimeout(() => {
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    if (loadingOverlay) {
+      loadingOverlay.classList.add('hidden');
+    }
+  }, 500); // Small delay to ensure smooth loading experience
 }
 
 // Update membership filter based on user role
