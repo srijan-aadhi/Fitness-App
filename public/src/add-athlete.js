@@ -19,9 +19,28 @@ document.getElementById('addAthleteForm').addEventListener('submit', async (e) =
     'Super Admin': 4
   };
   
-  if ((roleHierarchy[userRole] || 1) < 2) {
-    alert('Access denied: You need Tester role or higher to add new athletes. Please contact an administrator to upgrade your account.');
-    return;
+  // Allow athletes to add their first athlete, but require Admin+ role for subsequent additions
+  if ((roleHierarchy[userRole] || 1) < 3) {
+    // Check if this is an athlete's first time adding an athlete
+    if (userRole === 'Athlete') {
+      try {
+        const athleteCheckRes = await fetch(`${API_BASE_URL}/api/athletes`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (athleteCheckRes.ok) {
+          const existingAthletes = await athleteCheckRes.json();
+          if (existingAthletes && existingAthletes.length > 0) {
+            alert('Access denied: You can only add one athlete. Athletes already exist in the system.');
+            return;
+          }
+        }
+      } catch (err) {
+        console.error('Error checking existing athletes:', err);
+      }
+    } else {
+      alert('Access denied: You need Admin role or higher to add new athletes. Please contact an administrator to upgrade your account.');
+      return;
+    }
   }
 
   // Clear old messages
@@ -57,7 +76,7 @@ document.getElementById('addAthleteForm').addEventListener('submit', async (e) =
       let errorText = 'Failed to add athlete.';
       
       if (res.status === 403) {
-        errorText = 'Access denied: You need Tester role or higher to add athletes. Please contact an administrator.';
+        errorText = 'Access denied: You need Admin role or higher to add athletes. Please contact an administrator.';
       } else if (res.status === 401) {
         errorText = 'Your session has expired. Please log in again.';
         setTimeout(() => {

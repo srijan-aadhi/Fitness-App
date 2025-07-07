@@ -240,24 +240,38 @@ async function loadAthletes() {
 
   // Check if no athletes exist
   if (!data || data.length === 0) {
-    // Add option to redirect to add athlete page
-    const addAthleteOption = document.createElement('option');
-    addAthleteOption.value = 'add-athlete';
-    addAthleteOption.textContent = 'No athletes found - Click here to add one';
-    addAthleteOption.style.color = '#ef4444';
-    addAthleteOption.style.fontWeight = 'bold';
-    select.appendChild(addAthleteOption);
+    // Only show add-athlete option if user is an athlete and hasn't added any athletes yet
+    const userRole = localStorage.getItem('userRole') || 'Athlete';
+    const showAddAthleteOption = userRole === 'Athlete';
     
-    // Add event listener to redirect when selected
-    select.addEventListener('change', function() {
-      if (this.value === 'add-athlete') {
-        if (confirm('No athletes found. Would you like to add an athlete first?')) {
-          window.location.href = 'add-athlete.html';
-        } else {
-          this.value = ''; // Reset selection
+    if (showAddAthleteOption) {
+      // Add option to redirect to add athlete page
+      const addAthleteOption = document.createElement('option');
+      addAthleteOption.value = 'add-athlete';
+      addAthleteOption.textContent = 'No athletes found - Click here to add one';
+      addAthleteOption.style.color = '#ef4444';
+      addAthleteOption.style.fontWeight = 'bold';
+      select.appendChild(addAthleteOption);
+      
+      // Add event listener to redirect when selected
+      select.addEventListener('change', function() {
+        if (this.value === 'add-athlete') {
+          if (confirm('No athletes found. Would you like to add an athlete first?')) {
+            window.location.href = 'add-athlete.html';
+          } else {
+            this.value = ''; // Reset selection
+          }
         }
-      }
-    });
+      });
+    } else {
+      // For non-athletes, just show a message that no athletes are available
+      const noAthletesOption = document.createElement('option');
+      noAthletesOption.value = '';
+      noAthletesOption.textContent = 'No athletes available';
+      noAthletesOption.disabled = true;
+      noAthletesOption.style.color = '#6b7280';
+      select.appendChild(noAthletesOption);
+    }
     
     return;
   }
@@ -268,6 +282,10 @@ async function loadAthletes() {
     option.textContent = user.fullName;
     select.appendChild(option);
   });
+  
+  // Note: Once athletes exist, athletes should not see the add-athlete option
+  // This ensures athletes can only add their first athlete, after which they 
+  // must use existing athletes from the dropdown
 }
 
 // Add injury show/hide functionality

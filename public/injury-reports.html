@@ -133,7 +133,7 @@
         </div>
         <div class="flex items-center space-x-4">
           <button onclick="window.location.href='index.html#dashboard'" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">
-            <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+            <i class="fas fa-arrow-left mr-2"></i>Back to Main Dashboard
           </button>
           <button class="p-2 text-gray-400 hover:text-gray-600">
             <i class="fas fa-bell text-lg"></i>
@@ -150,14 +150,10 @@
   <nav class="bg-white border-b border-gray-200">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex space-x-8">
-        <button class="nav-tab" onclick="window.location.href='index.html#dashboard'">
-          <i class="fas fa-home mr-2"></i>Main Dashboard
-        </button>
-
         <button class="nav-tab active">
           <i class="fas fa-exclamation-triangle mr-2"></i>Injury Reports
         </button>
-        <button class="nav-tab" onclick="window.location.href='add-athlete.html'">
+        <button class="nav-tab" id="athleteRegistrationsTab" onclick="window.location.href='add-athlete.html'" style="display: none;">
           <i class="fas fa-user-plus mr-2"></i>Athlete Registrations
         </button>
       </div>
@@ -201,6 +197,22 @@
     if (!token) {
       window.location.href = 'login.html';
     }
+
+    // Check user role and show appropriate tabs
+    function checkUserRole() {
+      const userRole = localStorage.getItem('userRole') || 'Athlete';
+      const athleteRegistrationsTab = document.getElementById('athleteRegistrationsTab');
+      
+      // Only show Athlete Registrations tab for Super Admin
+      if (userRole === 'Super Admin') {
+        athleteRegistrationsTab.style.display = 'block';
+      } else {
+        athleteRegistrationsTab.style.display = 'none';
+      }
+    }
+
+    // Run role check when page loads
+    checkUserRole();
 
     // Load injury reports
     async function loadInjuryReports() {
