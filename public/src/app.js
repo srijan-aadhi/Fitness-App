@@ -279,11 +279,7 @@ async function loadAthletes() {
       // Add event listener to redirect when selected
       select.addEventListener('change', function() {
         if (this.value === 'add-athlete') {
-          if (confirm('No athletes found. Would you like to add an athlete first?')) {
-            window.location.href = 'add-athlete.html';
-          } else {
-            this.value = ''; // Reset selection
-          }
+          window.location.href = 'add-athlete.html';
         }
       });
     } else {
