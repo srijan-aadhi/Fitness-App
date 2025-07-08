@@ -19,8 +19,8 @@ document.getElementById('addAthleteForm').addEventListener('submit', async (e) =
     'Super Admin': 4
   };
   
-  // Allow athletes to add their first athlete, but require Admin+ role for subsequent additions
-  if ((roleHierarchy[userRole] || 1) < 3) {
+  // Allow athletes to add their first athlete, but require Tester+ role for subsequent additions
+  if ((roleHierarchy[userRole] || 1) < 2) {
     // Check if this is an athlete's first time adding an athlete
     if (userRole === 'Athlete') {
       try {
@@ -31,6 +31,10 @@ document.getElementById('addAthleteForm').addEventListener('submit', async (e) =
           const existingAthletes = await athleteCheckRes.json();
           if (existingAthletes && existingAthletes.length > 0) {
             alert('Access denied: You can only add one athlete. Athletes already exist in the system.');
+            // Redirect back to dashboard
+            setTimeout(() => {
+              window.location.href = 'index.html';
+            }, 2000);
             return;
           }
         }
@@ -38,7 +42,11 @@ document.getElementById('addAthleteForm').addEventListener('submit', async (e) =
         console.error('Error checking existing athletes:', err);
       }
     } else {
-      alert('Access denied: You need Admin role or higher to add new athletes. Please contact an administrator to upgrade your account.');
+      alert('Access denied: You need Tester role or higher to add new athletes. Please contact an administrator to upgrade your account.');
+      // Redirect back to dashboard
+      setTimeout(() => {
+        window.location.href = 'index.html';
+      }, 2000);
       return;
     }
   }
@@ -71,6 +79,11 @@ document.getElementById('addAthleteForm').addEventListener('submit', async (e) =
       document.getElementById('successMessage').classList.remove('hidden');
       document.getElementById('goBackBtn').classList.remove('hidden');
       document.getElementById('addAthleteForm').reset();
+      
+      // Automatically redirect to dashboard after 2 seconds
+      setTimeout(() => {
+        window.location.href = 'index.html';
+      }, 2000);
     } else {
       // Handle specific error messages
       let errorText = 'Failed to add athlete.';

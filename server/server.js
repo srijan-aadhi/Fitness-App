@@ -788,18 +788,42 @@ app.post('/api/athletes', enhancedAuthMiddleware, requireRole('Tester'), (req, r
   const { fullName, dob, gender, sport, contact } = req.body;
   const userId = req.user.id;
 
-  const query = `
-    INSERT INTO athletes (user_id, fullName, dob, gender, sport, contact)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `;
+  // For Athletes, check if they already have an athlete
+  if (req.user.role === 'Athlete') {
+    db.get(`SELECT COUNT(*) as count FROM athletes WHERE user_id = ?`, [userId], (err, result) => {
+      if (err) {
+        console.error('Error checking existing athletes:', err);
+        return res.status(500).json({ error: 'Failed to check existing athletes' });
+      }
+      
+      if (result.count > 0) {
+        return res.status(403).json({ 
+          error: 'Access denied: You can only add one athlete. You already have an athlete in the system.' 
+        });
+      }
+      
+      // If no existing athlete, proceed with creation
+      insertAthlete();
+    });
+  } else {
+    // For Testers and above, allow multiple athletes
+    insertAthlete();
+  }
 
-  db.run(query, [userId, fullName, dob, gender, sport, contact], function (err) {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: 'Failed to create athlete' });
-    }
-    res.status(201).json({ message: 'Athlete created', id: this.lastID });
-  });
+  function insertAthlete() {
+    const query = `
+      INSERT INTO athletes (user_id, fullName, dob, gender, sport, contact)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `;
+
+    db.run(query, [userId, fullName, dob, gender, sport, contact], function (err) {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ error: 'Failed to create athlete' });
+      }
+      res.status(201).json({ message: 'Athlete created', id: this.lastID });
+    });
+  }
 });
 
 // Submit Daily Tracking - allows all authenticated users
