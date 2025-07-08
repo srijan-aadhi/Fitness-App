@@ -24,13 +24,13 @@ document.getElementById('addAthleteForm').addEventListener('submit', async (e) =
     // Check if this is an athlete's first time adding an athlete
     if (userRole === 'Athlete') {
       try {
-        const athleteCheckRes = await fetch(`${API_BASE_URL}/api/athletes`, {
+        const athleteCheckRes = await fetch(`${API_BASE_URL}/api/athletes?checkExisting=true`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (athleteCheckRes.ok) {
-          const existingAthletes = await athleteCheckRes.json();
-          if (existingAthletes && existingAthletes.length > 0) {
-            alert('Access denied: You can only add one athlete. Athletes already exist in the system.');
+          const result = await athleteCheckRes.json();
+          if (result.hasExisting) {
+            alert('Access denied: You can only add one athlete. You already have an athlete in the system.');
             // Redirect back to dashboard
             setTimeout(() => {
               window.location.href = 'index.html';
@@ -77,7 +77,6 @@ document.getElementById('addAthleteForm').addEventListener('submit', async (e) =
 
     if (res.ok) {
       document.getElementById('successMessage').classList.remove('hidden');
-      document.getElementById('goBackBtn').classList.remove('hidden');
       document.getElementById('addAthleteForm').reset();
       
       // Automatically redirect to dashboard after 2 seconds
@@ -111,10 +110,8 @@ document.getElementById('addAthleteForm').addEventListener('submit', async (e) =
   }
 });
 
-document.getElementById('goBackBtn').addEventListener('click', () => {
-  localStorage.setItem('athleteAdded', 'true');
-  window.location.href = 'index.html';
-});
+// Go Back button functionality (using inline onclick for better reliability)
+// The button has an inline onclick that redirects to index.html
 
 async function loadAthletes() {
   console.log('loadAthletes called');

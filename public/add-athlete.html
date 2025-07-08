@@ -56,7 +56,7 @@
                           <span class="text-xl font-bold text-white">DARES</span>
         </div>
         <div class="flex space-x-4">
-          <button onclick="window.location.href='index.html'" class="px-6 py-2 text-white hover:text-yellow-400 transition-colors font-semibold">
+          <button id="testEntryBtn" onclick="window.location.href='index.html'" class="px-6 py-2 text-white hover:text-yellow-400 transition-colors font-semibold">
             <i class="fas fa-chart-line mr-2"></i>Test Entry
           </button>
           <button onclick="window.location.href='index.html'" class="px-6 py-2 text-white hover:text-yellow-400 transition-colors font-semibold">
@@ -153,7 +153,7 @@
           <i class="fas fa-exclamation-circle mr-2"></i>Failed to add athlete. Please try again.
         </p>
         
-        <button id="goBackBtn" class="btn-primary px-8 py-3 rounded-xl mt-4 font-semibold">
+        <button id="goBackBtn" class="btn-primary px-8 py-3 rounded-xl mt-4 font-semibold" onclick="window.location.href='index.html'">
           <i class="fas fa-arrow-left mr-2"></i>Go Back to Dashboard
         </button>
       </div>
@@ -186,16 +186,16 @@
         if (userRole === 'Athlete') {
           try {
             const token = localStorage.getItem('token');
-            const athleteCheckRes = await fetch(`${API_BASE_URL}/api/athletes`, {
+            const athleteCheckRes = await fetch(`${API_BASE_URL}/api/athletes?checkExisting=true`, {
               headers: { Authorization: `Bearer ${token}` }
             });
             if (athleteCheckRes.ok) {
-              const existingAthletes = await athleteCheckRes.json();
-              if (existingAthletes && existingAthletes.length > 0) {
+              const result = await athleteCheckRes.json();
+              if (result.hasExisting) {
                 hasPermission = false;
                 // Update warning message for athletes who already have athletes
                 document.querySelector('#roleWarning div p').textContent = 
-                  'You can only add one athlete. Athletes already exist in the system.';
+                  'You can only add one athlete. You already have an athlete in the system.';
               }
             }
           } catch (err) {
@@ -214,6 +214,13 @@
         document.getElementById('roleWarning').classList.remove('hidden');
         document.getElementById('addAthleteForm').style.opacity = '0.5';
         document.getElementById('addAthleteForm').style.pointerEvents = 'none';
+      }
+      
+      // Update navigation based on role
+      const testEntryBtn = document.getElementById('testEntryBtn');
+      if (userRole === 'Tester' || userRole === 'Admin') {
+        // Hide Test Entry button for Testers and Admins (they don't have access to injury forms)
+        testEntryBtn.style.display = 'none';
       }
       
       // Add role indicator

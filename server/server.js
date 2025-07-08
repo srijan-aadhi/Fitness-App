@@ -768,19 +768,31 @@ function formatMonthYear(monthYear) {
 
 // GET athletes - role-based access
 app.get('/api/athletes', enhancedAuthMiddleware, (req, res) => {
-  // Athletes can only see themselves, others can see all
-  const query = req.user.role === 'Athlete' 
-    ? `SELECT id, fullName FROM athletes WHERE user_id = ?`
-    : `SELECT athletes.id, athletes.fullName, users.fullName as testerName 
-       FROM athletes 
-       LEFT JOIN users ON athletes.user_id = users.id`;
+  // Check if this is for checking existing athletes (used by add-athlete page)
+  const checkExisting = req.query.checkExisting === 'true';
   
-  const params = req.user.role === 'Athlete' ? [req.user.id] : [];
+  if (checkExisting && req.user.role === 'Athlete') {
+    // For athletes checking if they can add a new athlete, check if they have any existing athletes
+    const query = `SELECT COUNT(*) as count FROM athletes WHERE user_id = ?`;
+    db.get(query, [req.user.id], (err, result) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json({ hasExisting: result.count > 0 });
+    });
+  } else {
+    // Normal athlete list for dropdowns
+    const query = req.user.role === 'Athlete' 
+      ? `SELECT id, fullName FROM athletes WHERE user_id = ?`
+      : `SELECT athletes.id, athletes.fullName, users.fullName as testerName 
+         FROM athletes 
+         LEFT JOIN users ON athletes.user_id = users.id`;
+    
+    const params = req.user.role === 'Athlete' ? [req.user.id] : [];
 
-  db.all(query, params, (err, rows) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(rows);
-  });
+    db.all(query, params, (err, rows) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json(rows);
+    });
+  }
 });
 
 // POST create new athlete - requires Tester+ role
