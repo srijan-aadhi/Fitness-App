@@ -36,100 +36,6 @@ function validateTrainingMinutes(value) {
   return !isNaN(num) && num > 0 && num <= 600;
 }
 
-// Show/hide custom input fields when "Other" is selected
-function setupOtherInputHandlers() {
-  const fieldsWithOther = [
-    { name: 'trainingMinutes', validator: validateTrainingMinutes, placeholder: 'Enter range (e.g., 100-110)', errorMsg: 'Please enter a valid range format (e.g., 100-110) with no letters' },
-    { name: 'waterIntake', validator: validateWaterIntake, placeholder: 'Enter liters (e.g., 2.5)', errorMsg: 'Please enter a valid number between 0.1 and 10 liters' },
-    { name: 'breakfastTime', validator: validateTimeInput, placeholder: 'Enter time (e.g., 08:30)', errorMsg: 'Please enter a valid time format (HH:MM)' },
-    { name: 'lunchTime', validator: validateTimeInput, placeholder: 'Enter time (e.g., 12:30)', errorMsg: 'Please enter a valid time format (HH:MM)' },
-    { name: 'snackTime', validator: validateTimeInput, placeholder: 'Enter time (e.g., 15:30)', errorMsg: 'Please enter a valid time format (HH:MM)' },
-    { name: 'dinnerTime', validator: validateTimeInput, placeholder: 'Enter time (e.g., 19:00)', errorMsg: 'Please enter a valid time format (HH:MM)' },
-    { name: 'sleepLength', validator: validateSleepLength, placeholder: 'Enter hours (e.g., 7.5)', errorMsg: 'Please enter a valid number between 0.1 and 24 hours' },
-    { name: 'sleepQuality', validator: (value) => value.trim().length >= 2, placeholder: 'Enter sleep quality description', errorMsg: 'Please enter a description of at least 2 characters' },
-    { name: 'tiredness', validator: (value) => value.trim().length >= 2, placeholder: 'Enter tiredness description', errorMsg: 'Please enter a description of at least 2 characters' }
-  ];
-
-  fieldsWithOther.forEach(field => {
-    // Create the custom input container
-    const customInputContainer = document.createElement('div');
-    customInputContainer.id = `${field.name}CustomContainer`;
-    customInputContainer.className = 'mt-2 hidden';
-    customInputContainer.innerHTML = `
-      <input type="text" 
-             id="${field.name}Custom" 
-             placeholder="${field.placeholder}"
-             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-      <div id="${field.name}CustomError" class="text-red-600 text-sm mt-1 hidden"></div>
-    `;
-
-    // Find the "Other" radio button and add the container after its parent
-    const otherRadio = document.querySelector(`input[name="${field.name}"][value="Other"]`);
-    if (otherRadio) {
-      otherRadio.parentElement.parentElement.appendChild(customInputContainer);
-      
-      // Add event listener to show/hide custom input
-      const radioButtons = document.querySelectorAll(`input[name="${field.name}"]`);
-      radioButtons.forEach(radio => {
-        radio.addEventListener('change', () => {
-          if (radio.value === 'Other' && radio.checked) {
-            customInputContainer.classList.remove('hidden');
-            document.getElementById(`${field.name}Custom`).focus();
-          } else {
-            customInputContainer.classList.add('hidden');
-            document.getElementById(`${field.name}CustomError`).classList.add('hidden');
-          }
-        });
-      });
-
-      // Add validation on input
-      const customInput = document.getElementById(`${field.name}Custom`);
-      customInput.addEventListener('blur', () => {
-        validateCustomInput(field.name, field.validator, field.errorMsg);
-      });
-      
-      customInput.addEventListener('input', () => {
-        // Clear error on input
-        document.getElementById(`${field.name}CustomError`).classList.add('hidden');
-      });
-    }
-  });
-}
-
-function validateCustomInput(fieldName, validator, errorMsg) {
-  const customInput = document.getElementById(`${fieldName}Custom`);
-  const errorDiv = document.getElementById(`${fieldName}CustomError`);
-  
-  if (customInput.value.trim() === '') {
-    errorDiv.textContent = 'This field is required when "Other" is selected';
-    errorDiv.classList.remove('hidden');
-    return false;
-  }
-  
-  if (!validator(customInput.value.trim())) {
-    errorDiv.textContent = errorMsg;
-    errorDiv.classList.remove('hidden');
-    return false;
-  }
-  
-  errorDiv.classList.add('hidden');
-  return true;
-}
-
-// Get the actual value for a field (either radio selection or custom input)
-function getFieldValue(fieldName) {
-  const checkedRadio = document.querySelector(`input[name="${fieldName}"]:checked`);
-  if (checkedRadio && checkedRadio.value === 'Other') {
-    // Special case for training minutes which uses a different ID
-    if (fieldName === 'trainingMinutes') {
-      const customInput = document.getElementById('customTrainingMinutes');
-      return customInput ? customInput.value.trim() : null;
-    }
-    return document.getElementById(`${fieldName}Custom`).value.trim();
-  }
-  return checkedRadio ? checkedRadio.value : null;
-}
-
 // Initialize signature canvas
 function initSignatureCanvas() {
   signatureCanvas = document.getElementById('signatureCanvas');
@@ -202,11 +108,16 @@ function clearSignature() {
 
 // Step navigation functions
 function showStep(step) {
+  console.log('Showing step:', step);
+  
   // Hide all steps
   document.querySelectorAll('.form-step').forEach(s => s.classList.add('hidden'));
   
   // Show current step
-  document.getElementById(`step${step}`).classList.remove('hidden');
+  const currentStepElement = document.getElementById(`step${step}`);
+  if (currentStepElement) {
+    currentStepElement.classList.remove('hidden');
+  }
   
   // Update step indicators
   document.querySelectorAll('.step').forEach(s => {
@@ -215,356 +126,126 @@ function showStep(step) {
   
   // Mark completed steps
   for (let i = 1; i < step; i++) {
-    document.getElementById(`step${i}Indicator`).classList.add('completed');
+    const stepIndicator = document.getElementById(`step${i}Indicator`);
+    if (stepIndicator) {
+      stepIndicator.classList.add('completed');
+    }
   }
   
   // Mark current step as active
-  document.getElementById(`step${step}Indicator`).classList.add('active');
+  const activeStepIndicator = document.getElementById(`step${step}Indicator`);
+  if (activeStepIndicator) {
+    activeStepIndicator.classList.add('active');
+  }
   
   currentStep = step;
+  
+  // Scroll to top of form
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+// Simplified validation functions
 function validateStep1() {
-  // Step 1: Only validate membership ID and training minutes
-  const requiredFields = ['membershipId', 'trainingMinutes'];
-  const missingFields = [];
-  const invalidFields = [];
+  console.log('Validating Step 1');
   
-  requiredFields.forEach(field => {
-    if (field === 'membershipId') {
-      if (!document.getElementById(field).value.trim()) {
-        missingFields.push('Membership ID');
-      }
-    } else {
-      const checkedRadio = document.querySelector(`input[name="${field}"]:checked`);
-      if (!checkedRadio) {
-        missingFields.push(field.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()));
-      } else if (checkedRadio.value === 'Other') {
-        // Special case for training minutes which uses different IDs
-        if (field === 'trainingMinutes') {
-          if (!validateCustomTrainingMinutes()) {
-            invalidFields.push('Training Minutes: Please enter a valid range format (e.g., 100-110)');
-          }
-        } else {
-          // Validate custom input for other fields
-          const customInput = document.getElementById(`${field}Custom`);
-          if (!customInput.value.trim()) {
-            missingFields.push(`${field.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())} (Other)`);
-          } else {
-            // Validate based on field type
-            let isValid = false;
-            let errorMsg = '';
-            
-            switch (field) {
-              default:
-                isValid = true; // No specific validation for step 1 other fields
-                break;
-            }
-            
-            if (!isValid) {
-              invalidFields.push(`${field.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}: ${errorMsg}`);
-              document.getElementById(`${field}CustomError`).textContent = errorMsg;
-              document.getElementById(`${field}CustomError`).classList.remove('hidden');
-            }
-          }
-        }
-      }
+  // Check membership ID
+  const membershipId = document.getElementById('membershipId');
+  if (!membershipId || !membershipId.value.trim()) {
+    alert('Please enter your Membership ID');
+    if (membershipId) membershipId.focus();
+    return false;
+  }
+  
+  // Check training minutes
+  const trainingMinutes = document.querySelector('input[name="trainingMinutes"]:checked');
+  if (!trainingMinutes) {
+    alert('Please select your training minutes');
+    return false;
+  }
+  
+  // If "Other" is selected, validate custom input
+  if (trainingMinutes.value === 'Other') {
+    const customInput = document.getElementById('customTrainingMinutes');
+    if (!customInput || !customInput.value.trim()) {
+      alert('Please enter your custom training minutes');
+      if (customInput) customInput.focus();
+      return false;
     }
-  });
-  
-  if (missingFields.length > 0) {
-    alert('Please fill in all required fields: ' + missingFields.join(', '));
-    return false;
+    
+    if (!validateTrainingMinutes(customInput.value.trim())) {
+      alert('Please enter a valid training minutes range (e.g., 100-110)');
+      if (customInput) customInput.focus();
+      return false;
+    }
   }
   
-  if (invalidFields.length > 0) {
-    alert('Please fix the following validation errors:\n' + invalidFields.join('\n'));
-    return false;
-  }
-  
+  console.log('Step 1 validation passed');
   return true;
 }
 
 function validateStep2() {
-  // Step 2: Validate nutrition and meal fields
-  const requiredFields = ['previousDay', 'appetite', 'waterIntake', 'breakfastTime', 'lunchTime', 'snackTime', 'dinnerTime'];
-  const missingFields = [];
-  const invalidFields = [];
+  console.log('Validating Step 2');
   
-  requiredFields.forEach(field => {
-    if (field === 'previousDay') {
-      if (!document.getElementById(field).value) {
-        missingFields.push('Previous Day');
-      }
-    } else {
-      const checkedRadio = document.querySelector(`input[name="${field}"]:checked`);
-      if (!checkedRadio) {
-        missingFields.push(field.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()));
-      } else if (checkedRadio.value === 'Other') {
-        // Validate custom input
-        const customInput = document.getElementById(`${field}Custom`);
-        if (!customInput.value.trim()) {
-          missingFields.push(`${field.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())} (Other)`);
-        } else {
-          // Validate based on field type
-          let isValid = false;
-          let errorMsg = '';
-          
-          switch (field) {
-            case 'trainingMinutes':
-              isValid = validateTrainingMinutes(customInput.value.trim());
-              errorMsg = 'Please enter a valid number between 1 and 600 minutes';
-              break;
-            case 'waterIntake':
-              isValid = validateWaterIntake(customInput.value.trim());
-              errorMsg = 'Please enter a valid number between 0.1 and 10 liters';
-              break;
-            case 'breakfastTime':
-            case 'lunchTime':
-            case 'snackTime':
-            case 'dinnerTime':
-              isValid = validateTimeInput(customInput.value.trim());
-              errorMsg = 'Please enter a valid time format (HH:MM)';
-              break;
-          }
-          
-          if (!isValid) {
-            invalidFields.push(`${field.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}: ${errorMsg}`);
-            document.getElementById(`${field}CustomError`).textContent = errorMsg;
-            document.getElementById(`${field}CustomError`).classList.remove('hidden');
-          }
-        }
-      }
+  // Check previous day
+  const previousDay = document.getElementById('previousDay');
+  if (!previousDay || !previousDay.value) {
+    alert('Please select the previous day');
+    if (previousDay) previousDay.focus();
+    return false;
+  }
+  
+  // Check required radio button fields
+  const requiredFields = ['appetite', 'waterIntake', 'breakfastTime', 'lunchTime', 'snackTime', 'dinnerTime'];
+  
+  for (const field of requiredFields) {
+    const selected = document.querySelector(`input[name="${field}"]:checked`);
+    if (!selected) {
+      alert(`Please select an option for ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`);
+      return false;
     }
-  });
-  
-  if (missingFields.length > 0) {
-    alert('Please fill in all required fields: ' + missingFields.join(', '));
-    return false;
   }
   
-  if (invalidFields.length > 0) {
-    alert('Please fix the following validation errors:\n' + invalidFields.join('\n'));
-    return false;
-  }
-  
+  console.log('Step 2 validation passed');
   return true;
 }
 
 function validateStep3() {
-  // Step 3: Validate sleep and wellness fields
+  console.log('Validating Step 3');
+  
+  // Check required radio button fields
   const requiredFields = ['sleepLength', 'sleepQuality', 'tiredness'];
-  const missingFields = [];
-  const invalidFields = [];
   
-  requiredFields.forEach(field => {
-    const checkedRadio = document.querySelector(`input[name="${field}"]:checked`);
-    if (!checkedRadio) {
-      missingFields.push(field.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()));
-    } else if (checkedRadio.value === 'Other') {
-      // Check for custom input container
-      const customInput = document.getElementById(`${field}Custom`);
-      if (!customInput) {
-        console.warn(`Custom input for ${field} not found`);
-        return;
-      }
-      
-      if (!customInput.value.trim()) {
-        missingFields.push(`${field.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())} (Other)`);
-      } else {
-        // Validate based on field type
-        let isValid = true;
-        let errorMsg = '';
-        
-        if (field === 'sleepLength') {
-          isValid = validateSleepLength(customInput.value.trim());
-          errorMsg = 'Please enter a valid number between 0.1 and 24 hours';
-        } else if (field === 'sleepQuality' || field === 'tiredness') {
-          isValid = customInput.value.trim().length >= 2;
-          errorMsg = 'Please enter a description of at least 2 characters';
-        }
-        
-        if (!isValid) {
-          invalidFields.push(`${field.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}: ${errorMsg}`);
-          const errorDiv = document.getElementById(`${field}CustomError`);
-          if (errorDiv) {
-            errorDiv.textContent = errorMsg;
-            errorDiv.classList.remove('hidden');
-          }
-        }
-      }
+  for (const field of requiredFields) {
+    const selected = document.querySelector(`input[name="${field}"]:checked`);
+    if (!selected) {
+      alert(`Please select an option for ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`);
+      return false;
     }
-  });
-  
-  if (missingFields.length > 0) {
-    alert('Please fill in all required fields: ' + missingFields.join(', '));
-    return false;
   }
   
-  if (invalidFields.length > 0) {
-    alert('Please fix the following validation errors:\n' + invalidFields.join('\n'));
-    return false;
-  }
-  
+  // Check signature
   if (!signatureData) {
     alert('Please provide your signature');
     return false;
   }
   
+  console.log('Step 3 validation passed');
   return true;
 }
 
-// Form submission
-const API_BASE_URL = 'https://fitness-app-production-b5bb.up.railway.app';
-
-document.getElementById('dailyTrackingForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-
-  const token = localStorage.getItem('token');
-  if (!token) {
-    alert('You are not logged in.');
-    window.location.href = '/login.html';
-    return;
-  }
-
-  // Validate Step 3
-  if (!validateStep3()) {
-    return;
-  }
-
-  // Clear old messages
-  document.getElementById('successMessage').classList.add('hidden');
-  document.getElementById('errorMessage').classList.add('hidden');
-
-  // Collect form data from both steps using the new getFieldValue function
-  const userRole = localStorage.getItem('userRole') || 'Athlete';
-  let membershipId = document.getElementById('membershipId').value.trim();
-  
-  // For athletes, get membership ID from their profile if field is hidden/empty
-  if (userRole === 'Athlete' && !membershipId) {
-    try {
-      const res = await fetch('https://fitness-app-production-b5bb.up.railway.app/api/auth/profile', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const userData = await res.json();
-        membershipId = userData.membership_id || '';
-      }
-    } catch (err) {
-      console.error('Failed to fetch membership ID:', err);
+// Get the actual value for a field (either radio selection or custom input)
+function getFieldValue(fieldName) {
+  const checkedRadio = document.querySelector(`input[name="${fieldName}"]:checked`);
+  if (checkedRadio && checkedRadio.value === 'Other') {
+    // Special case for training minutes which uses a different ID
+    if (fieldName === 'trainingMinutes') {
+      const customInput = document.getElementById('customTrainingMinutes');
+      return customInput ? customInput.value.trim() : null;
     }
+    return document.getElementById(`${fieldName}Custom`)?.value.trim() || null;
   }
-  
-  const formData = {
-    // Step 1 data
-    membershipId: membershipId,
-    trainingMinutes: getFieldValue('trainingMinutes'),
-    previousDay: document.getElementById('previousDay').value,
-    appetite: getFieldValue('appetite'),
-    waterIntake: getFieldValue('waterIntake'),
-    breakfastTime: getFieldValue('breakfastTime'),
-    lunchTime: getFieldValue('lunchTime'),
-    snackTime: getFieldValue('snackTime'),
-    dinnerTime: getFieldValue('dinnerTime'),
-    
-    // Step 3 data
-    sleepLength: getFieldValue('sleepLength'),
-    sleepQuality: getFieldValue('sleepQuality'),
-    tiredness: getFieldValue('tiredness'),
-    signature: signatureData
-  };
-
-  try {
-    const res = await fetch(`${API_BASE_URL}/api/daily-tracking`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(formData)
-    });
-
-    const data = await res.json();
-
-    if (res.ok) {
-      document.getElementById('successMessage').classList.remove('hidden');
-      document.getElementById('dailyTrackingForm').reset();
-      
-      // Reset to step 1
-      showStep(1);
-      
-      // Reset signature
-      clearSignature();
-      
-      // Hide all custom input containers
-      document.querySelectorAll('[id$="CustomContainer"]').forEach(container => {
-        container.classList.add('hidden');
-      });
-      
-      // Clear all custom input error messages
-      document.querySelectorAll('[id$="CustomError"]').forEach(error => {
-        error.classList.add('hidden');
-      });
-      
-      // Reset date to yesterday
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      document.getElementById('previousDay').value = yesterday.toISOString().split('T')[0];
-      
-      // Scroll to success message
-      document.getElementById('successMessage').scrollIntoView({ behavior: 'smooth' });
-    } else {
-      // Handle specific error messages
-      let errorText = 'Failed to submit daily tracking.';
-      
-      if (res.status === 403) {
-        errorText = 'Access denied. Please check your permissions.';
-      } else if (res.status === 401) {
-        errorText = 'Your session has expired. Please log in again.';
-        setTimeout(() => {
-          localStorage.removeItem('token');
-          localStorage.removeItem('userRole');
-          window.location.href = '/login.html';
-        }, 2000);
-      } else if (data.error || data.message) {
-        errorText = data.error || data.message;
-      }
-      
-      document.getElementById('errorMessage').textContent = errorText;
-      document.getElementById('errorMessage').classList.remove('hidden');
-      document.getElementById('errorMessage').scrollIntoView({ behavior: 'smooth' });
-    }
-  } catch (err) {
-    console.error('Error:', err);
-    document.getElementById('errorMessage').textContent = 'Network error. Please check your connection and try again.';
-    document.getElementById('errorMessage').classList.remove('hidden');
-    document.getElementById('errorMessage').scrollIntoView({ behavior: 'smooth' });
-  }
-});
-
-// Step navigation event listeners
-document.getElementById('nextStep1').addEventListener('click', () => {
-  if (validateStep1()) {
-    showStep(2);
-  }
-});
-
-document.getElementById('prevStep2').addEventListener('click', () => {
-  showStep(1);
-});
-
-document.getElementById('nextStep2').addEventListener('click', () => {
-  if (validateStep2()) {
-    showStep(3);
-  }
-});
-
-document.getElementById('prevStep3').addEventListener('click', () => {
-  showStep(2);
-});
-
-// Clear signature button
-document.getElementById('clearSignature').addEventListener('click', clearSignature);
+  return checkedRadio ? checkedRadio.value : null;
+}
 
 // Setup training minutes "Other" option handler
 function setupTrainingMinutesHandler() {
@@ -626,16 +307,190 @@ function validateCustomTrainingMinutes() {
   return true;
 }
 
+// Setup event listeners for navigation
+function setupEventListeners() {
+  console.log('Setting up event listeners');
+  
+  // Step 1 -> Step 2
+  const nextStep1 = document.getElementById('nextStep1');
+  if (nextStep1) {
+    nextStep1.addEventListener('click', function(e) {
+      e.preventDefault();
+      console.log('Next Step 1 clicked');
+      if (validateStep1()) {
+        showStep(2);
+      }
+    });
+  }
+  
+  // Step 2 -> Step 1 (back)
+  const prevStep2 = document.getElementById('prevStep2');
+  if (prevStep2) {
+    prevStep2.addEventListener('click', function(e) {
+      e.preventDefault();
+      console.log('Previous Step 2 clicked');
+      showStep(1);
+    });
+  }
+  
+  // Step 2 -> Step 3
+  const nextStep2 = document.getElementById('nextStep2');
+  if (nextStep2) {
+    nextStep2.addEventListener('click', function(e) {
+      e.preventDefault();
+      console.log('Next Step 2 clicked');
+      if (validateStep2()) {
+        showStep(3);
+      }
+    });
+  }
+  
+  // Step 3 -> Step 2 (back)
+  const prevStep3 = document.getElementById('prevStep3');
+  if (prevStep3) {
+    prevStep3.addEventListener('click', function(e) {
+      e.preventDefault();
+      console.log('Previous Step 3 clicked');
+      showStep(2);
+    });
+  }
+  
+  // Clear signature button
+  const clearSignatureBtn = document.getElementById('clearSignature');
+  if (clearSignatureBtn) {
+    clearSignatureBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      clearSignature();
+    });
+  }
+  
+  // Form submission
+  const form = document.getElementById('dailyTrackingForm');
+  if (form) {
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      console.log('Form submitted');
+      
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('You are not logged in.');
+        window.location.href = '/login.html';
+        return;
+      }
+
+      // Validate Step 3
+      if (!validateStep3()) {
+        return;
+      }
+
+      // Clear old messages
+      document.getElementById('successMessage')?.classList.add('hidden');
+      document.getElementById('errorMessage')?.classList.add('hidden');
+
+      // Collect form data
+      const userRole = localStorage.getItem('userRole') || 'Athlete';
+      let membershipId = document.getElementById('membershipId').value.trim();
+      
+      // For athletes, get membership ID from their profile if field is hidden/empty
+      if (userRole === 'Athlete' && !membershipId) {
+        try {
+          const res = await fetch('https://app.dsnc.in/api/auth/profile', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (res.ok) {
+            const userData = await res.json();
+            membershipId = userData.membership_id || '';
+          }
+        } catch (err) {
+          console.error('Failed to fetch membership ID:', err);
+        }
+      }
+      
+      const formData = {
+        membershipId: membershipId,
+        trainingMinutes: getFieldValue('trainingMinutes'),
+        previousDay: document.getElementById('previousDay').value,
+        appetite: getFieldValue('appetite'),
+        waterIntake: getFieldValue('waterIntake'),
+        breakfastTime: getFieldValue('breakfastTime'),
+        lunchTime: getFieldValue('lunchTime'),
+        snackTime: getFieldValue('snackTime'),
+        dinnerTime: getFieldValue('dinnerTime'),
+        sleepLength: getFieldValue('sleepLength'),
+        sleepQuality: getFieldValue('sleepQuality'),
+        tiredness: getFieldValue('tiredness'),
+        signature: signatureData
+      };
+
+      try {
+        const res = await fetch('https://app.dsnc.in/api/daily-tracking', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(formData)
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          const successMsg = document.getElementById('successMessage');
+          if (successMsg) {
+            successMsg.classList.remove('hidden');
+            successMsg.scrollIntoView({ behavior: 'smooth' });
+          }
+          
+          // Reset form
+          form.reset();
+          showStep(1);
+          clearSignature();
+          
+          // Reset date to yesterday
+          const yesterday = new Date();
+          yesterday.setDate(yesterday.getDate() - 1);
+          document.getElementById('previousDay').value = yesterday.toISOString().split('T')[0];
+          
+        } else {
+          let errorText = 'Failed to submit daily tracking.';
+          
+          if (res.status === 403) {
+            errorText = 'Access denied. Please check your permissions.';
+          } else if (res.status === 401) {
+            errorText = 'Your session has expired. Please log in again.';
+            setTimeout(() => {
+              localStorage.removeItem('token');
+              localStorage.removeItem('userRole');
+              window.location.href = '/login.html';
+            }, 2000);
+          } else if (data.error || data.message) {
+            errorText = data.error || data.message;
+          }
+          
+          const errorMsg = document.getElementById('errorMessage');
+          if (errorMsg) {
+            errorMsg.textContent = errorText;
+            errorMsg.classList.remove('hidden');
+            errorMsg.scrollIntoView({ behavior: 'smooth' });
+          }
+        }
+      } catch (err) {
+        console.error('Error:', err);
+        const errorMsg = document.getElementById('errorMessage');
+        if (errorMsg) {
+          errorMsg.textContent = 'Network error. Please check your connection and try again.';
+          errorMsg.classList.remove('hidden');
+          errorMsg.scrollIntoView({ behavior: 'smooth' });
+        }
+      }
+    });
+  }
+}
+
 // Check user role on page load and handle membership ID
 async function checkUserRole() {
   const userRole = localStorage.getItem('userRole') || 'Athlete';
   const token = localStorage.getItem('token');
-  
-  // Add role indicator
-  const roleIndicator = document.createElement('div');
-  roleIndicator.className = 'fixed bottom-4 left-4 bg-gray-800 text-white px-3 py-1 rounded-full text-sm font-semibold z-50 shadow-lg';
-  roleIndicator.textContent = `Role: ${userRole}`;
-  document.body.appendChild(roleIndicator);
   
   // Handle membership ID field based on role
   const membershipIdField = document.getElementById('membershipId');
@@ -644,7 +499,7 @@ async function checkUserRole() {
   if (userRole === 'Athlete') {
     // For athletes, auto-fill their membership ID and make it read-only (but visible)
     try {
-      const res = await fetch('https://fitness-app-production-b5bb.up.railway.app/api/auth/profile', {
+      const res = await fetch('https://app.dsnc.in/api/auth/profile', {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -702,24 +557,38 @@ async function checkUserRole() {
 }
 
 // Initialize everything when page loads
-document.addEventListener('DOMContentLoaded', async function() {
-  // Set default date to yesterday
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  document.getElementById('previousDay').value = yesterday.toISOString().split('T')[0];
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('DOM Content Loaded - Initializing daily tracking form');
   
-  // Initialize signature canvas
-  initSignatureCanvas();
-  
-  // Setup "Other" input handlers
-  setupOtherInputHandlers();
-  
-  // Setup training minutes handler
-  setupTrainingMinutesHandler();
-  
-  // Check user role
-  await checkUserRole();
-  
-  // Start with step 1
-  showStep(1);
+  // Wait a bit for all elements to be ready
+  setTimeout(async function() {
+    try {
+      // Set default date to yesterday
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const previousDayField = document.getElementById('previousDay');
+      if (previousDayField) {
+        previousDayField.value = yesterday.toISOString().split('T')[0];
+      }
+      
+      // Initialize signature canvas
+      initSignatureCanvas();
+      
+      // Setup training minutes handler
+      setupTrainingMinutesHandler();
+      
+      // Setup event listeners
+      setupEventListeners();
+      
+      // Check user role
+      await checkUserRole();
+      
+      // Start with step 1
+      showStep(1);
+      
+      console.log('Daily tracking form initialized successfully');
+    } catch (error) {
+      console.error('Error initializing daily tracking form:', error);
+    }
+  }, 100);
 }); 

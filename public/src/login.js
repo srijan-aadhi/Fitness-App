@@ -1,5 +1,5 @@
 // public/src/login.js
-const API_BASE_URL = 'https://fitness-app-production-b5bb.up.railway.app';
+const API_BASE_URL = 'https://app.dsnc.in';
 
 const loginForm = document.getElementById('loginForm');
 loginForm.addEventListener('submit', async (e) => {

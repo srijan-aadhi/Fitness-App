@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://fitness-app-production-b5bb.up.railway.app';
+const API_BASE_URL = 'https://app.dsnc.in';
 
 document.getElementById('addAthleteForm').addEventListener('submit', async (e) => {
   e.preventDefault();
