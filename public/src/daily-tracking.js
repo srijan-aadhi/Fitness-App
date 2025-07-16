@@ -148,12 +148,36 @@ function showStep(step) {
 function validateStep1() {
   console.log('Validating Step 1');
   
-  // Check membership ID
-  const membershipId = document.getElementById('membershipId');
-  if (!membershipId || !membershipId.value.trim()) {
-    alert('Please enter your Membership ID');
-    if (membershipId) membershipId.focus();
+  const userRole = localStorage.getItem('userRole') || 'Athlete';
+  
+  // Check membership ID - different logic for athletes vs admins
+  const membershipIdField = document.getElementById('membershipId');
+  if (!membershipIdField) {
+    alert('Membership ID field not found');
     return false;
+  }
+  
+  const membershipId = membershipIdField.value.trim();
+  
+  if (userRole === 'Athlete') {
+    // For athletes, the field should be pre-filled and read-only
+    if (!membershipId || membershipId === 'NOT ASSIGNED' || membershipId === 'UNABLE TO LOAD') {
+      alert('Your membership ID could not be loaded. Please contact support.');
+      return false;
+    }
+    console.log('Athlete membership ID validated:', membershipId);
+  } else {
+    // For super admin/other roles, they need to manually enter a membership ID
+    if (!membershipId) {
+      alert('Please enter a Membership ID for the person you are tracking');
+      membershipIdField.focus();
+      return false;
+    }
+    
+    // Normalize the membership ID (trim and convert to uppercase for consistency)
+    const normalizedId = membershipId.toUpperCase();
+    membershipIdField.value = normalizedId;
+    console.log('Super admin membership ID normalized:', normalizedId);
   }
   
   // Check training minutes
@@ -391,7 +415,12 @@ function setupEventListeners() {
       const userRole = localStorage.getItem('userRole') || 'Athlete';
       let membershipId = document.getElementById('membershipId').value.trim();
       
-      // For athletes, get membership ID from their profile if field is hidden/empty
+      // Normalize membership ID for consistency
+      if (membershipId) {
+        membershipId = membershipId.toUpperCase();
+      }
+      
+      // For athletes, get membership ID from their profile if field is somehow empty
       if (userRole === 'Athlete' && !membershipId) {
         try {
           const res = await fetch('https://app.dsnc.in/api/auth/profile', {
@@ -399,12 +428,20 @@ function setupEventListeners() {
           });
           if (res.ok) {
             const userData = await res.json();
-            membershipId = userData.membership_id || '';
+            membershipId = userData.membership_id ? userData.membership_id.toUpperCase() : '';
           }
         } catch (err) {
           console.error('Failed to fetch membership ID:', err);
         }
       }
+      
+      // Final validation before submission
+      if (!membershipId) {
+        alert('Membership ID is required. Please refresh the page and try again.');
+        return;
+      }
+      
+      console.log('Submitting form with membership ID:', membershipId);
       
       const formData = {
         membershipId: membershipId,
@@ -492,23 +529,33 @@ async function checkUserRole() {
   const userRole = localStorage.getItem('userRole') || 'Athlete';
   const token = localStorage.getItem('token');
   
+  console.log('Checking user role:', userRole);
+  
   // Handle membership ID field based on role
   const membershipIdField = document.getElementById('membershipId');
   const membershipIdContainer = membershipIdField?.parentElement;
   
   if (userRole === 'Athlete') {
-    // For athletes, auto-fill their membership ID and make it read-only (but visible)
+    // For athletes, auto-fill their membership ID and make it read-only
     try {
+      console.log('Fetching athlete profile for membership ID...');
       const res = await fetch('https://app.dsnc.in/api/auth/profile', {
         headers: { Authorization: `Bearer ${token}` }
       });
       
       if (res.ok) {
         const userData = await res.json();
+        console.log('Received user data:', userData);
+        
         if (membershipIdField) {
-          membershipIdField.value = userData.membership_id || 'Not assigned';
+          // Normalize and set the membership ID
+          const membershipId = userData.membership_id ? userData.membership_id.toUpperCase() : 'NOT ASSIGNED';
+          membershipIdField.value = membershipId;
           membershipIdField.readOnly = true;
+          membershipIdField.disabled = true; // Also disable to prevent any editing
           membershipIdField.className = 'w-full p-4 border border-gray-300 rounded-xl bg-gray-100 text-gray-600 cursor-not-allowed';
+          
+          console.log('Set athlete membership ID:', membershipId);
         }
         
         // Update the label to show this is their membership ID
@@ -523,22 +570,40 @@ async function checkUserRole() {
           helpText.textContent = 'This is your unique membership ID - it cannot be changed';
           helpText.className = 'text-sm text-blue-600 mt-2';
         }
+      } else {
+        console.error('Failed to fetch user profile, status:', res.status);
+        // Fallback if API call fails
+        if (membershipIdField) {
+          membershipIdField.value = 'UNABLE TO LOAD';
+          membershipIdField.readOnly = true;
+          membershipIdField.disabled = true;
+          membershipIdField.className = 'w-full p-4 border border-gray-300 rounded-xl bg-red-100 text-red-600 cursor-not-allowed';
+        }
       }
     } catch (err) {
       console.error('Failed to fetch user profile for membership ID:', err);
       // Fallback if API call fails
       if (membershipIdField) {
-        membershipIdField.value = 'Unable to load';
+        membershipIdField.value = 'UNABLE TO LOAD';
         membershipIdField.readOnly = true;
-        membershipIdField.className = 'w-full p-4 border border-gray-300 rounded-xl bg-gray-100 text-gray-600 cursor-not-allowed';
+        membershipIdField.disabled = true;
+        membershipIdField.className = 'w-full p-4 border border-gray-300 rounded-xl bg-red-100 text-red-600 cursor-not-allowed';
       }
     }
   } else {
-    // For other roles (Trainers/Admins), keep the field visible and editable
+    // For other roles (Super Admin), keep the field visible and editable
+    console.log('Setting up membership ID field for Super Admin');
+    
     if (membershipIdField) {
       membershipIdField.readOnly = false;
-      membershipIdField.placeholder = 'Enter membership ID for the user';
+      membershipIdField.disabled = false;
+      membershipIdField.placeholder = 'Enter membership ID (e.g., ATH001)';
       membershipIdField.className = 'w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all';
+      
+      // Add input event listener to automatically normalize the ID as they type
+      membershipIdField.addEventListener('input', function() {
+        this.value = this.value.toUpperCase();
+      });
     }
     
     // Update label for non-athletes
@@ -550,7 +615,7 @@ async function checkUserRole() {
     // Update helper text for non-athletes
     const helpText = membershipIdContainer?.querySelector('p');
     if (helpText) {
-      helpText.textContent = 'Enter the membership ID for the person you are tracking';
+      helpText.textContent = 'Enter the membership ID for the person you are tracking (will be converted to uppercase)';
       helpText.className = 'text-sm text-gray-500 mt-2';
     }
   }
