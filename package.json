@@ -6,13 +6,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node server/server.js",
+    "start": "node server/start.js",
     "dev": "node server/server.js",
     "build": "npm install --production && npm rebuild sqlite3",
     "postinstall": "npm rebuild sqlite3",
     "audit-fix": "npm audit fix",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "diagnostic": "node server/diagnostic.js"
+    "diagnostic": "node server/diagnostic.js",
+    "init-db": "node server/init-db.js"
   },
   "repository": {
     "type": "git",
