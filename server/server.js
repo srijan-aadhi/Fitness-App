@@ -11,6 +11,11 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 console.log('🔌 Port configuration:', { PORT, envPort: process.env.PORT });
+console.log('🔐 JWT Secret status:', process.env.JWT_SECRET ? `Set (${process.env.JWT_SECRET.length} chars)` : 'MISSING');
+console.log('🗃️ Database path:', process.env.RAILWAY_VOLUME_MOUNT_PATH 
+  ? `${process.env.RAILWAY_VOLUME_MOUNT_PATH}/db.sqlite`
+  : process.env.DB_PATH || './database/db.sqlite');
+console.log('🚀 Starting DARES API Server v2.0.0...');
 
 // Configure CORS for global access
 const corsOptions = {
@@ -36,8 +41,10 @@ app.get('/', (req, res) => {
   res.json({ 
     message: 'DARES API Server', 
     status: 'running',
+    version: '2.0.0', // Updated version to verify deployment
     timestamp: new Date().toISOString(),
     jwtSecret: process.env.JWT_SECRET ? 'Set' : 'Missing',
+    jwtSecretLength: process.env.JWT_SECRET ? process.env.JWT_SECRET.length : 0,
     port: PORT,
     nodeEnv: process.env.NODE_ENV || 'development'
   });
@@ -143,6 +150,41 @@ app.post('/debug/login-test', (req, res) => {
     return res.status(500).json({ 
       error: 'Unexpected error in login test',
       details: error.message 
+    });
+  }
+});
+
+// Simple test endpoint to bypass database issues
+app.post('/api/test-login', (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    console.log('🧪 Test login attempt:', { email, hasPassword: !!password });
+    
+    // Simple test - no database involved
+    if (email === 'test@test.com' && password === 'test123') {
+      res.json({ 
+        success: true, 
+        message: 'Test login successful',
+        version: '2.0.0',
+        timestamp: new Date().toISOString(),
+        jwtConfigured: !!process.env.JWT_SECRET
+      });
+    } else {
+      res.status(401).json({ 
+        success: false, 
+        message: 'Test login failed - use test@test.com / test123',
+        version: '2.0.0',
+        timestamp: new Date().toISOString()
+      });
+    }
+  } catch (error) {
+    console.error('❌ Test login error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Test login server error',
+      error: error.message,
+      version: '2.0.0'
     });
   }
 });
