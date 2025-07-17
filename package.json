@@ -11,7 +11,8 @@
     "build": "npm install --production && npm rebuild sqlite3",
     "postinstall": "npm rebuild sqlite3",
     "audit-fix": "npm audit fix",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "diagnostic": "node server/diagnostic.js"
   },
   "repository": {
     "type": "git",

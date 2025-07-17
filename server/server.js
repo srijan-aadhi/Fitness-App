@@ -135,15 +135,66 @@ app.post('/api/auth/signup', async (req, res) => {
 });
 
 // Login - now includes role in response
-app.post('/api/auth/login', (req, res) => {
-  const { email, password } = req.body;
-  db.get(`SELECT * FROM users WHERE email = ?`, [email], async (err, user) => {
-    if (err || !user) return res.status(401).json({ message: 'Invalid credentials' });
-    const match = await bcrypt.compare(password, user.password);
-    if (!match) return res.status(401).json({ message: 'Invalid credentials' });
-    const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, process.env.JWT_SECRET);
-    res.json({ token, role: user.role, userId: user.id });
-  });
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    // Validate input
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
+    
+    // Check if JWT_SECRET is available
+    if (!process.env.JWT_SECRET) {
+      console.error('❌ JWT_SECRET environment variable is not set');
+      return res.status(500).json({ message: 'Server configuration error' });
+    }
+    
+    // Get user from database
+    db.get(`SELECT * FROM users WHERE email = ?`, [email], async (err, user) => {
+      if (err) {
+        console.error('❌ Database error during login:', err);
+        return res.status(500).json({ message: 'Database error' });
+      }
+      
+      if (!user) {
+        console.log('❌ Login failed: User not found for email:', email);
+        return res.status(401).json({ message: 'Invalid credentials' });
+      }
+      
+      try {
+        // Compare password
+        const match = await bcrypt.compare(password, user.password);
+        if (!match) {
+          console.log('❌ Login failed: Invalid password for email:', email);
+          return res.status(401).json({ message: 'Invalid credentials' });
+        }
+        
+        // Generate JWT token
+        const token = jwt.sign(
+          { id: user.id, email: user.email, role: user.role }, 
+          process.env.JWT_SECRET,
+          { expiresIn: '24h' }
+        );
+        
+        console.log('✅ Login successful for:', email, 'Role:', user.role);
+        res.json({ 
+          token, 
+          role: user.role, 
+          userId: user.id,
+          message: 'Login successful'
+        });
+        
+      } catch (bcryptError) {
+        console.error('❌ Bcrypt error during login:', bcryptError);
+        return res.status(500).json({ message: 'Password verification error' });
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Unexpected error during login:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
 });
 
 // Get current user profile
