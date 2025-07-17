@@ -9,6 +9,9 @@ if (!token) {
 // Store user role information
 let userRole = localStorage.getItem('userRole') || 'Athlete';
 
+// Configuration for API endpoints
+const API_BASE_URL = 'https://fitness-app-production-b5bb.up.railway.app';
+
 // Fetch user profile to get role information with timeout
 async function fetchUserProfile() {
   try {

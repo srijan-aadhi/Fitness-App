@@ -1,6 +1,3 @@
-// Configuration for API endpoints
-const API_BASE_URL = 'https://fitness-app-production-b5bb.up.railway.app';
-
 // Multi-step form variables
 let currentStep = 1;
 let signatureCanvas, signatureCtx;
