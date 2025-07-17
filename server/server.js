@@ -260,11 +260,16 @@ app.post('/api/auth/signup', async (req, res) => {
 
 // Login - now includes role in response
 app.post('/api/auth/login', async (req, res) => {
+  console.log('🔐 Login attempt started...');
+  
   try {
     const { email, password } = req.body;
     
+    console.log('📧 Login attempt for email:', email);
+    
     // Validate input
     if (!email || !password) {
+      console.log('❌ Missing email or password');
       return res.status(400).json({ message: 'Email and password are required' });
     }
     
@@ -274,7 +279,9 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(500).json({ message: 'Server configuration error' });
     }
     
-    // Get user from database
+    console.log('🔐 JWT_SECRET is configured, length:', process.env.JWT_SECRET.length);
+    
+    // Get user from database with extensive error handling
     db.get(`SELECT * FROM users WHERE email = ?`, [email], async (err, user) => {
       if (err) {
         console.error('❌ Database error during login:', err);
@@ -286,6 +293,8 @@ app.post('/api/auth/login', async (req, res) => {
         return res.status(401).json({ message: 'Invalid credentials' });
       }
       
+      console.log('✅ User found:', user.email, 'Role:', user.role);
+      
       try {
         // Compare password
         const match = await bcrypt.compare(password, user.password);
@@ -294,20 +303,30 @@ app.post('/api/auth/login', async (req, res) => {
           return res.status(401).json({ message: 'Invalid credentials' });
         }
         
-        // Generate JWT token
-        const token = jwt.sign(
-          { id: user.id, email: user.email, role: user.role }, 
-          process.env.JWT_SECRET,
-          { expiresIn: '24h' }
-        );
+        console.log('✅ Password validated successfully');
         
-        console.log('✅ Login successful for:', email, 'Role:', user.role);
-        res.json({ 
-          token, 
-          role: user.role, 
-          userId: user.id,
-          message: 'Login successful'
-        });
+        // Generate JWT token
+        try {
+          const token = jwt.sign(
+            { id: user.id, email: user.email, role: user.role }, 
+            process.env.JWT_SECRET,
+            { expiresIn: '24h' }
+          );
+          
+          console.log('✅ JWT token generated successfully');
+          console.log('✅ Login successful for:', email, 'Role:', user.role);
+          
+          res.json({ 
+            token, 
+            role: user.role, 
+            userId: user.id,
+            message: 'Login successful'
+          });
+          
+        } catch (jwtError) {
+          console.error('❌ JWT signing error:', jwtError);
+          return res.status(500).json({ message: 'Token generation error' });
+        }
         
       } catch (bcryptError) {
         console.error('❌ Bcrypt error during login:', bcryptError);
@@ -1404,6 +1423,47 @@ app.get('/api/admin/stats', enhancedAuthMiddleware, requireRole('Admin'), (req, 
   }).catch(err => {
     res.status(500).json({ error: err.message });
   });
+});
+
+// Simple admin creation endpoint (for debugging)
+app.post('/api/create-admin', async (req, res) => {
+  try {
+    console.log('🔧 Creating admin user...');
+    
+    const hashedPassword = await bcrypt.hash('admin123', 10);
+    
+    // Delete existing admin if exists
+    db.run(`DELETE FROM users WHERE email = ?`, ['admin@fitness-app.com'], (err) => {
+      if (err) {
+        console.error('❌ Error deleting existing admin:', err);
+      }
+    });
+    
+    // Create new admin user
+    db.run(`INSERT INTO users (fullName, email, password, role, membership_id) 
+            VALUES (?, ?, ?, ?, ?)`, 
+      ['Admin User', 'admin@fitness-app.com', hashedPassword, 'Super Admin', 'ADMIN001'],
+      function(err) {
+        if (err) {
+          console.error('❌ Error creating admin user:', err);
+          return res.status(500).json({ error: 'Failed to create admin user', details: err.message });
+        }
+        
+        console.log('✅ Admin user created successfully');
+        res.json({ 
+          success: true,
+          message: 'Admin user created successfully',
+          credentials: {
+            email: 'admin@fitness-app.com',
+            password: 'admin123'
+          }
+        });
+      });
+    
+  } catch (error) {
+    console.error('❌ Error in admin creation:', error);
+    res.status(500).json({ error: 'Admin creation failed', details: error.message });
+  }
 });
 
 // Listen on both IPv4 and IPv6 for global accessibility

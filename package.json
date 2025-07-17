@@ -13,7 +13,8 @@
     "audit-fix": "npm audit fix",
     "test": "echo \"Error: no test specified\" && exit 1",
     "diagnostic": "node server/diagnostic.js",
-    "init-db": "node server/init-db.js"
+    "init-db": "node server/init-db.js",
+    "create-admin": "node server/create-admin.js"
   },
   "repository": {
     "type": "git",
