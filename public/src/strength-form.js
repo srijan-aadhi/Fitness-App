@@ -1,5 +1,5 @@
 // Strength Form JavaScript
-const API_BASE_URL = 'https://app.dsnc.in';
+const API_BASE_URL = 'https://fitness-app-production-b5bb.up.railway.app';
 let formSubmitted = false;
 
 // Validation functions
