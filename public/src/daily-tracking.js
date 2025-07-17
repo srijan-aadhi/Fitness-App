@@ -1,3 +1,6 @@
+// Configuration for API endpoints
+const API_BASE_URL = 'https://fitness-app-production-b5bb.up.railway.app';
+
 // Multi-step form variables
 let currentStep = 1;
 let signatureCanvas, signatureCtx;
@@ -423,7 +426,7 @@ function setupEventListeners() {
       // For athletes, get membership ID from their profile if field is somehow empty
       if (userRole === 'Athlete' && !membershipId) {
         try {
-          const res = await fetch('https://app.dsnc.in/api/auth/profile', {
+          const res = await fetch(`${API_BASE_URL}/api/auth/profile`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           if (res.ok) {
@@ -460,7 +463,7 @@ function setupEventListeners() {
       };
 
       try {
-        const res = await fetch('https://app.dsnc.in/api/daily-tracking', {
+        const res = await fetch(`${API_BASE_URL}/api/daily-tracking`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -539,7 +542,7 @@ async function checkUserRole() {
     // For athletes, auto-fill their membership ID and make it read-only
     try {
       console.log('Fetching athlete profile for membership ID...');
-      const res = await fetch('https://app.dsnc.in/api/auth/profile', {
+      const res = await fetch(`${API_BASE_URL}/api/auth/profile`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
