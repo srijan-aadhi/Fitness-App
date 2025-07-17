@@ -16,6 +16,7 @@ console.log('🗃️ Database path:', process.env.RAILWAY_VOLUME_MOUNT_PATH
   ? `${process.env.RAILWAY_VOLUME_MOUNT_PATH}/db.sqlite`
   : process.env.DB_PATH || './database/db.sqlite');
 console.log('🚀 Starting DARES API Server v2.0.0...');
+console.log('⏰ Deployment timestamp:', new Date().toISOString());
 
 // Configure CORS for global access
 const corsOptions = {
