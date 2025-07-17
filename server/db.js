@@ -37,7 +37,8 @@ const db = new sqlite3.Database(dbPath, (err) => {
   if (err) {
     console.error('❌ Database connection error:', err.message);
     console.error('Database path attempted:', dbPath);
-    process.exit(1);
+    // Don't crash the server - let it handle errors gracefully
+    console.error('Database will be unavailable until this is resolved');
   } else {
     console.log('✅ Database connected successfully');
   }

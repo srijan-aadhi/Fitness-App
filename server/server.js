@@ -95,6 +95,17 @@ app.get('/debug', (req, res) => {
   });
 });
 
+// Simple ping endpoint to test server stability
+app.get('/ping', (req, res) => {
+  console.log('📍 Ping request received');
+  res.setHeader('Content-Type', 'application/json');
+  res.json({ 
+    status: 'pong', 
+    timestamp: new Date().toISOString(),
+    version: '2.0.1'
+  });
+});
+
 // Test endpoint to verify login functionality
 app.post('/debug/login-test', (req, res) => {
   try {
@@ -262,6 +273,9 @@ app.post('/api/auth/signup', async (req, res) => {
 app.post('/api/auth/login', async (req, res) => {
   console.log('🔐 Login attempt started...');
   
+  // Ensure we always send JSON responses
+  res.setHeader('Content-Type', 'application/json');
+  
   try {
     const { email, password } = req.body;
     
@@ -281,61 +295,74 @@ app.post('/api/auth/login', async (req, res) => {
     
     console.log('🔐 JWT_SECRET is configured, length:', process.env.JWT_SECRET.length);
     
+    // Check if database is available
+    if (!db) {
+      console.error('❌ Database connection is not available');
+      return res.status(500).json({ message: 'Database connection error' });
+    }
+    
     // Get user from database with extensive error handling
     db.get(`SELECT * FROM users WHERE email = ?`, [email], async (err, user) => {
-      if (err) {
-        console.error('❌ Database error during login:', err);
-        return res.status(500).json({ message: 'Database error' });
-      }
-      
-      if (!user) {
-        console.log('❌ Login failed: User not found for email:', email);
-        return res.status(401).json({ message: 'Invalid credentials' });
-      }
-      
-      console.log('✅ User found:', user.email, 'Role:', user.role);
-      
       try {
-        // Compare password
-        const match = await bcrypt.compare(password, user.password);
-        if (!match) {
-          console.log('❌ Login failed: Invalid password for email:', email);
+        if (err) {
+          console.error('❌ Database error during login:', err);
+          return res.status(500).json({ message: 'Database error' });
+        }
+        
+        if (!user) {
+          console.log('❌ Login failed: User not found for email:', email);
           return res.status(401).json({ message: 'Invalid credentials' });
         }
         
-        console.log('✅ Password validated successfully');
+        console.log('✅ User found:', user.email, 'Role:', user.role);
         
-        // Generate JWT token
         try {
-          const token = jwt.sign(
-            { id: user.id, email: user.email, role: user.role }, 
-            process.env.JWT_SECRET,
-            { expiresIn: '24h' }
-          );
+          // Compare password
+          const match = await bcrypt.compare(password, user.password);
+          if (!match) {
+            console.log('❌ Login failed: Invalid password for email:', email);
+            return res.status(401).json({ message: 'Invalid credentials' });
+          }
           
-          console.log('✅ JWT token generated successfully');
-          console.log('✅ Login successful for:', email, 'Role:', user.role);
+          console.log('✅ Password validated successfully');
           
-          res.json({ 
-            token, 
-            role: user.role, 
-            userId: user.id,
-            message: 'Login successful'
-          });
+          // Generate JWT token
+          try {
+            const token = jwt.sign(
+              { id: user.id, email: user.email, role: user.role }, 
+              process.env.JWT_SECRET,
+              { expiresIn: '24h' }
+            );
+            
+            console.log('✅ JWT token generated successfully');
+            console.log('✅ Login successful for:', email, 'Role:', user.role);
+            
+            res.json({ 
+              token, 
+              role: user.role, 
+              userId: user.id,
+              message: 'Login successful'
+            });
+            
+          } catch (jwtError) {
+            console.error('❌ JWT signing error:', jwtError);
+            return res.status(500).json({ message: 'Token generation error' });
+          }
           
-        } catch (jwtError) {
-          console.error('❌ JWT signing error:', jwtError);
-          return res.status(500).json({ message: 'Token generation error' });
+        } catch (bcryptError) {
+          console.error('❌ Bcrypt error during login:', bcryptError);
+          return res.status(500).json({ message: 'Password verification error' });
         }
         
-      } catch (bcryptError) {
-        console.error('❌ Bcrypt error during login:', bcryptError);
-        return res.status(500).json({ message: 'Password verification error' });
+      } catch (dbCallbackError) {
+        console.error('❌ Database callback error:', dbCallbackError);
+        return res.status(500).json({ message: 'Database processing error' });
       }
     });
     
   } catch (error) {
     console.error('❌ Unexpected error during login:', error);
+    console.error('❌ Login error stack:', error.stack);
     return res.status(500).json({ message: 'Internal server error' });
   }
 });
@@ -1519,12 +1546,14 @@ process.on('SIGINT', () => {
 // Handle uncaught exceptions
 process.on('uncaughtException', (error) => {
   console.error('❌ Uncaught Exception:', error);
-  process.exit(1);
+  // Don't crash the server - just log the error
+  console.error('Stack trace:', error.stack);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
   console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
-  process.exit(1);
+  // Don't crash the server - just log the error
+  console.error('Unhandled rejection stack:', reason.stack);
 });
 
 // Keep process alive
