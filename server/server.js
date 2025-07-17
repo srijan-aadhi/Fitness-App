@@ -48,22 +48,103 @@ app.get('/health', (req, res) => {
   // Test database connectivity
   db.get('SELECT 1 as test', (err, row) => {
     if (err) {
-      return res.status(503).json({ 
-        status: 'unhealthy',
-        error: 'Database connection failed',
-        uptime: process.uptime(),
-        timestamp: new Date().toISOString()
+      console.error('❌ Health check DB error:', err);
+      return res.status(500).json({ status: 'error', database: 'failed', error: err.message });
+    }
+    res.json({ 
+      status: 'healthy', 
+      database: 'connected',
+      timestamp: new Date().toISOString(),
+      environment: {
+        nodeEnv: process.env.NODE_ENV || 'development',
+        port: PORT,
+        hasJwtSecret: !!process.env.JWT_SECRET,
+        jwtSecretLength: process.env.JWT_SECRET ? process.env.JWT_SECRET.length : 0
+      }
+    });
+  });
+});
+
+// Debug endpoint to test server configuration
+app.get('/debug', (req, res) => {
+  res.json({
+    status: 'debug',
+    timestamp: new Date().toISOString(),
+    environment: {
+      nodeEnv: process.env.NODE_ENV || 'development',
+      port: PORT,
+      hasJwtSecret: !!process.env.JWT_SECRET,
+      jwtSecretLength: process.env.JWT_SECRET ? process.env.JWT_SECRET.length : 0,
+      dbPath: process.env.RAILWAY_VOLUME_MOUNT_PATH 
+        ? `${process.env.RAILWAY_VOLUME_MOUNT_PATH}/db.sqlite`
+        : process.env.DB_PATH || './database/db.sqlite',
+      railwayVolume: process.env.RAILWAY_VOLUME_MOUNT_PATH || 'Not set'
+    },
+    versions: {
+      node: process.version,
+      platform: process.platform
+    }
+  });
+});
+
+// Test endpoint to verify login functionality
+app.post('/debug/login-test', (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    // Check if JWT_SECRET is available
+    if (!process.env.JWT_SECRET) {
+      return res.status(500).json({ 
+        error: 'JWT_SECRET not configured',
+        hasJwtSecret: false 
       });
     }
     
-    res.status(200).json({ 
-      status: 'healthy',
-      database: 'connected',
-      uptime: process.uptime(),
-      memory: process.memoryUsage(),
-      timestamp: new Date().toISOString()
+    // Test database connection
+    db.get("SELECT COUNT(*) as count FROM users", (err, result) => {
+      if (err) {
+        return res.status(500).json({ 
+          error: 'Database connection failed',
+          dbError: err.message 
+        });
+      }
+      
+      // Test if user exists
+      if (email) {
+        db.get("SELECT id, email, role FROM users WHERE email = ?", [email], (err, user) => {
+          if (err) {
+            return res.status(500).json({ 
+              error: 'Database query failed',
+              dbError: err.message 
+            });
+          }
+          
+          return res.json({
+            status: 'login-test-success',
+            jwtSecretLength: process.env.JWT_SECRET.length,
+            totalUsers: result.count,
+            userExists: !!user,
+            userRole: user ? user.role : null,
+            timestamp: new Date().toISOString()
+          });
+        });
+      } else {
+        return res.json({
+          status: 'login-test-success',
+          jwtSecretLength: process.env.JWT_SECRET.length,
+          totalUsers: result.count,
+          message: 'Provide email to test user lookup',
+          timestamp: new Date().toISOString()
+        });
+      }
     });
-  });
+    
+  } catch (error) {
+    return res.status(500).json({ 
+      error: 'Unexpected error in login test',
+      details: error.message 
+    });
+  }
 });
 
 // Middleware to check user role
